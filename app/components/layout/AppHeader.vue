@@ -1,0 +1,42 @@
+<template>
+  <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+    <div class="mx-auto flex h-16 w-full max-w-[1500px] items-center justify-between px-4 md:px-6">
+      <div class="flex items-center gap-3">
+        
+        <h2 class="text-lg font-semibold priority-color">LTM</h2>
+        <button
+          type="button"
+          class="flex items-center justify-center rounded-md p-1.5 text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          aria-label="Abrir menu"
+          @click="isOpen = true"
+        >
+          <span class="material-icons text-[22px]">menu</span>
+        </button>
+        <Avatar />
+      </div>
+
+
+      <div class="flex items-center gap-2">
+        
+        <ThemeSwitch />
+
+        <button
+          class="flex gap-2 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-slate-700 transition hover:border-rose-400 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          type="button"
+          aria-label="Logout"
+          title="Logout"
+          @click="logout"
+        >
+          sair <span class="material-icons text-[15px]">logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup lang="ts">
+import ThemeSwitch from '~/components/layout/ThemeSwitch.vue'
+import Avatar from './User/Avatar.vue';
+const { logout } = useAuthMock()
+const { isOpen } = useSidebar()
+</script>
