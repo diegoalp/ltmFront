@@ -1,12 +1,19 @@
 import type { DealCard, DealStage, KanbanColumn } from '~/types/crm'
 
 const COLUMNS: KanbanColumn[] = [
-  { id: 1, title: 'Lead', limit: 6 },
-  { id: 2, title: 'Simulação', limit: 6 },
-  { id: 3, title: 'Documentação', limit: 5 },
-  { id: 4, title: 'Negociação', limit: 5 },
-  { id: 5, title: 'Proposta', limit: 8 },
-  { id: 6, title: 'Fechado', limit: 8 }
+  { id: 1, title: 'Lead'},
+  { id: 2, title: 'Simulação'},
+  { id: 3, title: 'Documentação'},
+  { id: 4, title: 'Negociação',},
+  { id: 5, title: 'Proposta'},
+  { id: 6, title: 'Fechado'}
+]
+
+const OPERATIONS = [
+  { id: 1, name: 'NOVO', color: 'bg-blue-500' },
+  { id: 2, name: 'PORTABILIDADE', color: 'bg-green-500' },
+  { id: 3, name: 'REFIN', color: 'bg-yellow-500' },
+  { id: 4, name: 'COMPRA DE DÍVIDA', color: 'bg-red-500' }
 ]
 
 const DEALS: DealCard[] = [
@@ -19,7 +26,9 @@ const DEALS: DealCard[] = [
     stage: 1,
     value: 12500,
     priority: 'high',
-    dueDate: '2026-06-04'
+    dueDate: '2026-06-04',
+    bank: 'Banco do Brasil',
+    operation: OPERATIONS[0]
   },
   {
     id: 2,
@@ -30,7 +39,9 @@ const DEALS: DealCard[] = [
     stage: 2,
     value: 8200,
     priority: 'medium',
-    dueDate: '2026-06-10'
+    dueDate: '2026-06-10',
+    bank: 'Bradesco',
+    operation: OPERATIONS[1]
   },
   {
     id: 3,
@@ -41,7 +52,9 @@ const DEALS: DealCard[] = [
     stage: 5,
     value: 19700,
     priority: 'high',
-    dueDate: '2026-06-07'
+    dueDate: '2026-06-07',
+    bank: 'Itaú',
+    operation: OPERATIONS[2]
   },
   {
     id: 4,
@@ -52,7 +65,9 @@ const DEALS: DealCard[] = [
     stage: 6,
     value: 5400,
     priority: 'low',
-    dueDate: '2026-06-02'
+    dueDate: '2026-06-02',
+    bank: 'Santander',
+    operation: OPERATIONS[3]
   },
   {
     id: 5,
@@ -63,7 +78,9 @@ const DEALS: DealCard[] = [
     stage: 3,
     value: 4600,
     priority: 'medium',
-    dueDate: '2026-06-05'
+    dueDate: '2026-06-05',
+    bank: 'Caixa Econômica',
+    operation: OPERATIONS[3]
   },
   {
     id: 6,
@@ -74,7 +91,9 @@ const DEALS: DealCard[] = [
     stage: 2,
     value: 9100,
     priority: 'high',
-    dueDate: '2026-06-12'
+    dueDate: '2026-06-12',
+    bank: 'Itaú',
+    operation: OPERATIONS[2]
   },
   {
     id: 7,
@@ -85,7 +104,9 @@ const DEALS: DealCard[] = [
     stage: 4,
     value: 9100,
     priority: 'high',
-    dueDate: '2026-06-12'
+    dueDate: '2026-06-12',
+    bank: 'Itaú',
+    operation: OPERATIONS[2]
   }
 ]
 
@@ -106,10 +127,21 @@ export const useKanbanData = () => {
     }
   })
 
+  const moveDeal = (dealId: number, stage: DealStage) => {
+    const deal = deals.value.find((item) => item.id === dealId)
+
+    if (!deal || deal.stage === stage) {
+      return
+    }
+
+    deal.stage = stage
+  }
+
   return {
     columns,
     deals,
     totalPipeline,
-    cardsByColumn
+    cardsByColumn,
+    moveDeal
   }
 }

@@ -2,7 +2,7 @@
   <button
     type="button"
     role="switch"
-    class="relative h-6 w-[60px] rounded-full border border-slate-300/70 p-0.5 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 dark:border-slate-700/70"
+    class="relative h-7 w-[60px] rounded-full border border-slate-300/70 p-0.5 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 dark:border-slate-700/70"
     :class="trackClass"
     :aria-checked="mode === 'dark'"
     :aria-label="mode === 'dark' ? 'Alternar para modo claro' : 'Alternar para modo escuro'"

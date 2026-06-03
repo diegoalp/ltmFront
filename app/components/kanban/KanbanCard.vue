@@ -3,7 +3,7 @@
     <header class="flex items-start justify-between gap-2">
       <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ card.title }}</h4>
       <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" :class="priorityClass">
-        {{ card.priority }}
+        {{ card.operation.name }}
       </span>
     </header>
 
@@ -11,15 +11,9 @@
 
     <dl class="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
       <div class="flex items-center justify-between">
-        <dt>Owner</dt>
         <dd>{{ card.ownerName }}</dd>
       </div>
-      <div class="flex items-center justify-between">
-        <dt>Due</dt>
-        <dd>{{ formatDate(card.dueDate) }}</dd>
-      </div>
       <div class="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
-        <dt>Value</dt>
         <dd>{{ formatCurrency(card.value) }}</dd>
       </div>
     </dl>
@@ -27,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DealCard } from '~/app/types/crm'
+import type { DealCard } from '~/types/crm'
 
 const props = defineProps<{ card: DealCard }>()
 
@@ -44,10 +38,10 @@ const priorityClass = computed(() => {
 })
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(value)
 }
 
 const formatDate = (value: string) => {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(value))
+  return new Intl.DateTimeFormat('pt-BR', { month: 'short', day: 'numeric' }).format(new Date(value))
 }
 </script>

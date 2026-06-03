@@ -1,17 +1,9 @@
-export type DealStage = {
-  1: 'Lead',
-  2: 'Simulação',
-  3: 'Documentação',
-  4: 'Negociação',
-  5: 'Proposta',
-  6: 'Fechado'
-}
+export type DealStage = 1 | 2 | 3 | 4 | 5 | 6
 
-export type Operations = {
-  1: 'NOVO',
-  2: 'PORTABILIDADE',
-  3: 'REFIN',
-  4: 'COMPRA DE DÍVIDA'
+export interface Operations {
+  id: number
+  name: string,
+  color: string
 }
 
 export interface CRMUser {
@@ -24,7 +16,6 @@ export interface CRMUser {
 export interface KanbanColumn {
   id: DealStage
   title: string
-  limit: number
 }
 
 export interface DealCard {
@@ -34,11 +25,11 @@ export interface DealCard {
   bank: string
   ownerId: number
   ownerName: string
-  stage: keyof DealStage
-  operation: keyof Operations
+  stage: DealStage
+  operation: Operations
   value: number
   priority: 'low' | 'medium' | 'high'
-  dueDate: string
+  dueDate: string,
 }
 
 export interface LoginPayload {
