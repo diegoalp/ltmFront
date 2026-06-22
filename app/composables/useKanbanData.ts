@@ -1,4 +1,4 @@
-import type { DealCard, DealStage, KanbanColumn } from '~/types/crm'
+import type { DealCard, DealStage, DealTimelineItem, KanbanColumn } from '~/types/crm'
 
 const COLUMNS: KanbanColumn[] = [
   { id: 1, title: 'Lead'},
@@ -10,103 +10,166 @@ const COLUMNS: KanbanColumn[] = [
 ]
 
 const OPERATIONS = [
-  { id: 1, name: 'NOVO', color: 'bg-blue-500' },
-  { id: 2, name: 'PORTABILIDADE', color: 'bg-green-500' },
-  { id: 3, name: 'REFIN', color: 'bg-yellow-500' },
-  { id: 4, name: 'COMPRA DE DÍVIDA', color: 'bg-red-500' }
+  { id: 1, name: 'NOVO', color: 'bg-blue-500 text-white dark:bg-blue-600 dark:text-slate-200' },
+  { id: 2, name: 'PORTABILIDADE', color: 'bg-green-500 text-white dark:bg-green-600 dark:text-slate-200' },
+  { id: 3, name: 'REFIN', color: 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-slate-200' },
+  { id: 4, name: 'COMPRA DE DÍVIDA', color: 'bg-red-500 text-white dark:bg-red-600 dark:text-slate-200' }
 ]
 
 const DEALS: DealCard[] = [
   {
     id: 1,
     title: 'Antonio Francisco da Silva',
-    company: 'Aurora Labs',
+    phone: '(11) 99999-9999',
+    document: '123.456.789-00',
+    birthDate: '1985-06-15',
+    company: 'GOVERNO DO PIAUÍ',
     ownerId: 2,
     ownerName: 'Diego Sales',
     stage: 1,
     value: 12500,
     priority: 'high',
     dueDate: '2026-06-04',
+    createdAt: '2026-05-30T09:15:00',
     bank: 'Banco do Brasil',
-    operation: OPERATIONS[0]
+    operation: OPERATIONS[0],
+    timeline: [
+      { id: 1, date: '2026-05-30T09:15:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-06-01T14:00:00', title: 'Mudança para Simulação', userName: 'Diego Sales' },
+      { id: 3, date: '2026-06-03T11:20:00', title: 'Atualização enviada para o banco', userName: 'Marina Lopes' }
+    ]
   },
   {
     id: 2,
-    title: 'Workflow automation pilot',
-    company: 'Northline Co',
+    title: 'Maria Amelinda de Souza',
+    company: 'SIAPE',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(11) 99999-9999',
+    document: '123.456.789-00',
+    birthDate: '1985-06-15',
     stage: 2,
     value: 8200,
     priority: 'medium',
     dueDate: '2026-06-10',
+    createdAt: '2026-05-28T13:40:00',
     bank: 'Bradesco',
-    operation: OPERATIONS[1]
+    operation: OPERATIONS[1],
+    timeline: [
+      { id: 1, date: '2026-05-28T13:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-05-29T10:30:00', title: 'Primeira reunião concluída', userName: 'Larissa Melo' },
+      { id: 3, date: '2026-06-01T09:00:00', title: 'Movido para Simulação', userName: 'Diego Sales' }
+    ]
   },
   {
     id: 3,
-    title: 'Post-sales dashboard package',
-    company: 'Monarca Group',
+    title: 'Jozué Pereira dos Santos',
+    company: 'EXÉRCITO',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(11) 99999-9999',
+    document: '123.456.789-00',
+    birthDate: '1985-06-15',
     stage: 5,
     value: 19700,
     priority: 'high',
     dueDate: '2026-06-07',
+    createdAt: '2026-05-25T15:20:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2]
+    operation: OPERATIONS[2],
+    timeline: [
+      { id: 1, date: '2026-05-25T15:20:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-05-27T17:45:00', title: 'Responsável alterado', userName: 'Matheus Costa' },
+      { id: 3, date: '2026-06-02T08:30:00', title: 'Preparado para proposta', userName: 'Diego Sales' }
+    ]
   },
   {
     id: 4,
-    title: 'Support team seat expansion',
-    company: 'Kappa Retail',
+    title: 'Mariana Oliveira Lima',
+    company: 'GOVERNO DO ESTADO DO MARANHÃO',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(98) 98567-1234',
+    document: '099.223.498-22',
+    birthDate: '1985-06-15',
     stage: 6,
     value: 5400,
     priority: 'low',
     dueDate: '2026-06-02',
+    createdAt: '2026-05-20T11:05:00',
     bank: 'Santander',
-    operation: OPERATIONS[3]
+    operation: OPERATIONS[3],
+    timeline: [
+      { id: 1, date: '2026-05-20T11:05:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-05-23T16:10:00', title: 'Documentos assinados', userName: 'Eduardo Reis' },
+      { id: 3, date: '2026-05-30T12:45:00', title: 'Fechado com sucesso', userName: 'Diego Sales' }
+    ]
   },
   {
     id: 5,
-    title: 'Lead qualification workshop',
-    company: 'Lime Energy',
+    title: 'Lucas de Oliveira Martins',
+    company: 'GOVERNO DO ESTADO DE MINAS GERAIS',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(34) 98900-9999',
+    document: '988.003.234-29',
+    birthDate: '1985-06-15',
     stage: 3,
     value: 4600,
     priority: 'medium',
     dueDate: '2026-06-05',
+    createdAt: '2026-05-31T10:50:00',
     bank: 'Caixa Econômica',
-    operation: OPERATIONS[3]
+    operation: OPERATIONS[3],
+    timeline: [
+      { id: 1, date: '2026-05-31T10:50:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-06-01T15:00:00', title: 'Documento enviado ao cliente', userName: 'Larissa Melo' },
+      { id: 3, date: '2026-06-03T09:30:00', title: 'Movido para Documentação', userName: 'Diego Sales' }
+    ]
   },
   {
     id: 6,
-    title: 'Quarterly operations review',
-    company: 'Vertex Media',
+    title: 'Fátima Gomes de Souza',
+    company: 'SIAPE',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(11) 99999-9999',
+    document: '233.455.789-00',
+    birthDate: '1985-06-15',
     stage: 2,
     value: 9100,
     priority: 'high',
     dueDate: '2026-06-12',
+    createdAt: '2026-05-29T08:40:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2]
+    operation: OPERATIONS[2],
+    timeline: [
+      { id: 1, date: '2026-05-29T08:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-06-01T11:00:00', title: 'Reunião de alinhamento', userName: 'Marina Lopes' },
+      { id: 3, date: '2026-06-04T13:20:00', title: 'Movido para Simulação', userName: 'Diego Sales' }
+    ]
   },
   {
     id: 7,
-    title: 'Quarterly operations review',
-    company: 'Vertex Media',
+    title: 'Marina Lopes de Almeida',
+    company: 'INSS',
     ownerId: 1,
     ownerName: 'Diego Sales',
+    phone: '(98) 99999-9999',
+    document: '123.456.789-00',
+    birthDate: '1985-06-15',
     stage: 4,
     value: 9100,
     priority: 'high',
     dueDate: '2026-06-12',
+    createdAt: '2026-05-29T08:40:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2]
+    operation: OPERATIONS[2],
+    timeline: [
+      { id: 1, date: '2026-05-29T08:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
+      { id: 2, date: '2026-06-05T14:25:00', title: 'Proposta negociada', userName: 'Diego Sales' },
+      { id: 3, date: '2026-06-06T11:10:00', title: 'Movido para Negociação', userName: 'Diego Sales' }
+    ]
   }
 ]
 
@@ -137,11 +200,14 @@ export const useKanbanData = () => {
     deal.stage = stage
   }
 
+  const findDealById = (dealId: number) => deals.value.find((item) => item.id === dealId)
+
   return {
     columns,
     deals,
     totalPipeline,
     cardsByColumn,
-    moveDeal
+    moveDeal,
+    findDealById
   }
 }

@@ -13,6 +13,13 @@ export interface CRMUser {
   initials: string
 }
 
+export interface DealTimelineItem {
+  id: number
+  date: string
+  title: string
+  userName: string
+}
+
 export interface KanbanColumn {
   id: DealStage
   title: string
@@ -21,6 +28,9 @@ export interface KanbanColumn {
 export interface DealCard {
   id: number
   title: string
+  phone: string
+  document: string
+  birthDate: string
   company: string
   bank: string
   ownerId: number
@@ -29,7 +39,9 @@ export interface DealCard {
   operation: Operations
   value: number
   priority: 'low' | 'medium' | 'high'
-  dueDate: string,
+  dueDate: string
+  createdAt: string
+  timeline: DealTimelineItem[]
 }
 
 export interface LoginPayload {
