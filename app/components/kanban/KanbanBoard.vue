@@ -13,7 +13,8 @@
 
     <div class="overflow-x-auto pb-2">
       <div class="flex min-w-max gap-3">
-        <KanbanColumn
+        <KanbanColumn 
+          class="bg-slate-200/50 dark:bg-slate-800 rounded-lg p-3"
           v-for="column in columns"
           :key="column.id"
           :column="column"

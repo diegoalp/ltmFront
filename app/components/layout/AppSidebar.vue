@@ -64,8 +64,8 @@ const menuItems = computed<MenuItem[]>(() => [
   {
     label: 'Configurações',
     icon: 'settings',
-    to: '/#configuracoes',
-    isActive: route.path === '/' && route.hash === '#configuracoes'
+    to: '/configuracoes',
+    isActive: route.path === '/' && route.hash === 'configuracoes'
   }
 ])
 </script>

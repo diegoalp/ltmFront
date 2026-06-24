@@ -1,5 +1,5 @@
 <template>
-  <main class="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-teal-50 to-amber-50 px-4 py-10 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+  <main class="relative flex align-items-center min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-teal-50 to-amber-50 px-4 py-10 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
     <div class="absolute -left-16 top-10 h-56 w-56 rounded-full bg-teal-300/30 blur-3xl dark:bg-teal-600/20" />
     <div class="absolute -right-16 bottom-10 h-56 w-56 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
 
@@ -11,15 +11,16 @@
       {{ mode === 'dark' ? 'Claro' : 'Escuro' }}
     </button>
 
-    <section class="relative mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-panel backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 md:p-8">
-      <p class="text-xs uppercase tracking-[0.3em] text-teal-600 dark:text-teal-300">Welcome back</p>
-      <h1 class="mt-2 text-3xl font-semibold">CRM Access</h1>
-      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Sign in with the demo account and explore the kanban workflow prototype.
-      </p>
+    <section class="relative mx-auto w-full max-w-md flex items-center">
+      <div class="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-panel backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 md:p-8">
+        <h1 class="mt-2 text-3xl font-semibold text-center">CRM</h1>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 text-center">
+          Conectando você aos seus clientes. Faça login para acessar seu pipeline e acelerar suas vendas.
+        </p>
 
-      <div class="mt-6">
-        <LoginForm />
+        <div class="mt-6">
+          <LoginForm />
+        </div>
       </div>
     </section>
   </main>
@@ -29,7 +30,9 @@
 import LoginForm from '~/components/auth/LoginForm.vue'
 const { isAuthenticated } = useAuthMock()
 const { mode, toggleTheme } = useTheme()
-
+definePageMeta({
+  layout: false // Remove o layout default para esta página específica
+})
 if (import.meta.client && isAuthenticated.value) {
   await navigateTo('/')
 }

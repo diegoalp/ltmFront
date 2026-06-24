@@ -1,11 +1,4 @@
 <template>
-  <div class="min-h-screen bg-slate-100 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
-    <AppHeader />
-
-    <main class="mx-auto flex w-full max-w-[1500px] p-4 md:p-6">
-      <AppSidebar class="hidden lg:block" />
-
-      <section class="min-w-0 flex-1 space-y-4">
         <header>
           <p class="text-sm uppercase tracking-[0.24em]">Pipeline</p>
           <h1 class="text-2xl font-semibold md:text-3xl priority-color">CRM Kanban</h1>
@@ -15,9 +8,6 @@
         </header>
 
         <KanbanBoard />
-      </section>
-    </main>
-  </div>
 </template>
 
 <script setup lang="ts">

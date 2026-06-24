@@ -35,7 +35,7 @@
       class="w-full rounded-xl bg-teal-600 px-4 py-2.5 font-medium text-white transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-70"
       :disabled="loading"
     >
-      {{ loading ? 'Entrando...' : 'Entrar no sistema' }}
+      {{ loading ? 'Entrando...' : 'Entrar' }}
     </button>
   </form>
 </template>
