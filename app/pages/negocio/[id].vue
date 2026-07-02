@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
-    <AppHeader />
+    <!-- <AppHeader /> -->
 
     <main class="mx-auto flex min-h-screen w-full max-w-[1600px] items-start p-4 md:p-6">
-      <AppSidebar class="hidden lg:block" />
+      <!-- <AppSidebar class="hidden lg:block" /> -->
 
       <section v-if="deal" class="min-w-0 flex-1 space-y-6">
         
@@ -29,8 +29,8 @@
             <div class="grid grid-cols- gap-2">
               <h1 class="text-3xl font-medium tracking-tight text-slate-900 dark:text-slate-100">{{ deal.title }}</h1>
               <div class="flex gap-3">
-                  <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-600/40 dark:text-sky-300 px-2.5 py-1 rounded-md">{{ deal.company }}</span>
-                  <span class="text-xs rounded-md px-2.5 py-1" :class="deal.operation.color">{{ deal.operation.name }}</span>
+                  <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-600/40 dark:text-sky-300 px-2.5 py-1 rounded-md">{{ categoryName }}</span>
+                  <span class="text-xs rounded-md px-2.5 py-1" :class="productClass">{{ productName }}</span>
               </div>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Responsável: {{ deal.ownerName }} • Criado em {{ formatDate(deal.createdAt) }}</p>
@@ -269,7 +269,7 @@
 </template>
 
 <script setup lang="ts">
-import { inlineConfig } from '#build/types/app.config'
+// import { inlineConfig } from '#build/types/app.config'
 import AppHeader from '~/components/layout/AppHeader.vue'
 import AppSidebar from '~/components/layout/AppSidebar.vue'
 import { useAuthMock } from '~/composables/useAuthMock'
@@ -280,6 +280,8 @@ import { formatCurrency, formatDate } from '~/utils/formatters'
 const route = useRoute()
 const { user, isAuthenticated } = useAuthMock()
 const { columns, findDealById, moveDeal } = useKanbanData()
+const { categoryById } = useCategoriesMock()
+const { productById } = useProductsMock()
 
 const dealId = computed(() => {
   const rawId = route.params.id
@@ -287,6 +289,11 @@ const dealId = computed(() => {
 })
 
 const deal = computed(() => findDealById(dealId.value))
+const category = computed(() => deal.value ? categoryById(deal.value.categoryId) : undefined)
+const product = computed(() => deal.value ? productById(deal.value.productId) : undefined)
+const categoryName = computed(() => category.value?.name ?? 'Sem categoria')
+const productName = computed(() => product.value?.name ?? 'Sem produto')
+const productClass = computed(() => product.value?.color ?? 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300')
 
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')

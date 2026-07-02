@@ -22,7 +22,8 @@
             :key="item.label"
             :to="item.to"
             class="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-transparent transition duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 dark:hover:border-slate-700 dark:hover:bg-slate-800"
-            :class="item.isActive ? 'bg-slate-900 text-white shadow-lg dark:bg-slate-100 dark:text-slate-900' : 'text-slate-500 dark:text-slate-400'"
+            :class="item.isActive ? 'shadow-lg' : 'text-slate-500 dark:text-slate-400'"
+            :style="item.isActive ? activeItemStyle : undefined"
             :aria-label="item.label"
           >
             <span class="material-icons text-[22px]">{{ item.icon }}</span>
@@ -47,6 +48,12 @@ type MenuItem = {
 
 const route = useRoute()
 const { isOpen } = useSidebar()
+const { settings } = useBranding()
+
+const activeItemStyle = computed(() => ({
+  backgroundColor: settings.value.primaryColor,
+  color: settings.value.primaryTextColor
+}))
 
 const menuItems = computed<MenuItem[]>(() => [
   {
@@ -65,7 +72,7 @@ const menuItems = computed<MenuItem[]>(() => [
     label: 'Configurações',
     icon: 'settings',
     to: '/configuracoes',
-    isActive: route.path === '/' && route.hash === 'configuracoes'
+    isActive: route.path.startsWith('/configuracoes')
   }
 ])
 </script>

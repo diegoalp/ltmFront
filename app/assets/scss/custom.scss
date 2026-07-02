@@ -1,5 +1,5 @@
 // Declare the variables
-$priority-color: #625751;
+$priority-color: var(--crm-primary);
 
 //Use the variables
 .priority-color{

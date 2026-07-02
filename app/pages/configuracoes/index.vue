@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="settings-page">
     <!-- Cabeçalho da Página -->
     <div class="border-b border-gray-200 pb-5 mb-8">
       <h1 class="text-2xl font-bold tracking-tight text-gray-900">Configurações da Instância</h1>
@@ -10,6 +10,20 @@
 
     <!-- Grid em Duas Colunas -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <span class="w-2 h-4 rounded-full inline-block" style="background-color: var(--crm-primary);"></span>
+            Identidade Visual
+          </h2>
+          <p class="text-xs text-gray-400 mt-1 mb-4">Configure logotipo, nome da marca e esquema de cores da interface.</p>
+
+          <NuxtLink to="/configuracoes/identidade" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
+            <span>Personalizar marca do CRM</span>
+            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </NuxtLink>
+        </div>
+      </div>
       
       <!-- Seção: Gestão Comercial -->
       <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
@@ -27,6 +41,10 @@
             </NuxtLink>
             <NuxtLink to="/configuracoes/produtos" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
               <span>Produtos</span>
+              <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </NuxtLink>
+            <NuxtLink to="/configuracoes/categorias" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
+              <span>Categorias de Clientes</span>
               <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
             </NuxtLink>
             <NuxtLink to="/configuracoes/origens" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
@@ -60,7 +78,7 @@
       </div>
 
       <!-- Seção: Sistema & Conexões -->
-      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2">
+      <!-- <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2">
         <div>
           <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <span class="w-2 h-4 bg-amber-500 rounded-full inline-block"></span>
@@ -75,7 +93,7 @@
             </NuxtLink>
           </nav>
         </div>
-      </div>
+      </div> -->
 
     </div>
   </div>

@@ -3,16 +3,20 @@
     <article class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
       <header class="flex items-start justify-between gap-2">
         <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ card.title }}</h4>
-        <!-- <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" :class="priorityClass">
-           {{ card.operation.name }}
-        </span> -->
         <span class="relative flex h-3 w-3">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full"></span>
             <span class="relative inline-flex rounded-full h-3 w-3" :class="priorityClass"></span>
           </span>
       </header>
 
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ card.company }}</p>
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        <span class="rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+          {{ categoryName }}
+        </span>
+        <span class="rounded-md px-2 py-0.5 text-[10px] font-semibold" :class="productClass">
+          {{ productName }}
+        </span>
+      </div>
 
       <!-- <dl class="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
         <div class="flex items-center justify-between">
@@ -30,6 +34,13 @@
 import type { DealCard } from '~/types/crm'
 
 const props = defineProps<{ card: DealCard }>()
+const { categoryById } = useCategoriesMock()
+const { productById } = useProductsMock()
+
+const categoryName = computed(() => categoryById(props.card.categoryId)?.name ?? 'Sem categoria')
+const product = computed(() => productById(props.card.productId))
+const productName = computed(() => product.value?.name ?? 'Sem produto')
+const productClass = computed(() => product.value?.color ?? 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300')
 
 const priorityClass = computed(() => {
   if (props.card.priority === 'high') {

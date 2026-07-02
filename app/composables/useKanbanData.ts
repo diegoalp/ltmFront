@@ -9,13 +9,6 @@ const COLUMNS: KanbanColumn[] = [
   { id: 6, title: 'Fechado'}
 ]
 
-const OPERATIONS = [
-  { id: 1, name: 'NOVO', color: 'bg-blue-500 text-white dark:bg-blue-600 dark:text-slate-200' },
-  { id: 2, name: 'PORTABILIDADE', color: 'bg-green-500 text-white dark:bg-green-600 dark:text-slate-200' },
-  { id: 3, name: 'REFIN', color: 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-slate-200' },
-  { id: 4, name: 'COMPRA DE DÍVIDA', color: 'bg-red-500 text-white dark:bg-red-600 dark:text-slate-200' }
-]
-
 const DEALS: DealCard[] = [
   {
     id: 1,
@@ -23,7 +16,8 @@ const DEALS: DealCard[] = [
     phone: '(11) 99999-9999',
     document: '123.456.789-00',
     birthDate: '1985-06-15',
-    company: 'GOVERNO DO PIAUÍ',
+    categoryId: 3,
+    productId: 1,
     ownerId: 2,
     ownerName: 'Diego Sales',
     stage: 1,
@@ -32,7 +26,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-04',
     createdAt: '2026-05-30T09:15:00',
     bank: 'Banco do Brasil',
-    operation: OPERATIONS[0],
     timeline: [
       { id: 1, date: '2026-05-30T09:15:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-06-01T14:00:00', title: 'Mudança para Simulação', userName: 'Diego Sales' },
@@ -42,7 +35,8 @@ const DEALS: DealCard[] = [
   {
     id: 2,
     title: 'Maria Amelinda de Souza',
-    company: 'SIAPE',
+    categoryId: 1,
+    productId: 2,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(11) 99999-9999',
@@ -54,7 +48,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-10',
     createdAt: '2026-05-28T13:40:00',
     bank: 'Bradesco',
-    operation: OPERATIONS[1],
     timeline: [
       { id: 1, date: '2026-05-28T13:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-05-29T10:30:00', title: 'Primeira reunião concluída', userName: 'Larissa Melo' },
@@ -64,7 +57,8 @@ const DEALS: DealCard[] = [
   {
     id: 3,
     title: 'Jozué Pereira dos Santos',
-    company: 'EXÉRCITO',
+    categoryId: 2,
+    productId: 3,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(11) 99999-9999',
@@ -76,7 +70,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-07',
     createdAt: '2026-05-25T15:20:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2],
     timeline: [
       { id: 1, date: '2026-05-25T15:20:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-05-27T17:45:00', title: 'Responsável alterado', userName: 'Matheus Costa' },
@@ -86,7 +79,8 @@ const DEALS: DealCard[] = [
   {
     id: 4,
     title: 'Mariana Oliveira Lima',
-    company: 'GOVERNO DO ESTADO DO MARANHÃO',
+    categoryId: 4,
+    productId: 2,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(98) 98567-1234',
@@ -98,7 +92,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-02',
     createdAt: '2026-05-20T11:05:00',
     bank: 'Santander',
-    operation: OPERATIONS[3],
     timeline: [
       { id: 1, date: '2026-05-20T11:05:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-05-23T16:10:00', title: 'Documentos assinados', userName: 'Eduardo Reis' },
@@ -108,7 +101,8 @@ const DEALS: DealCard[] = [
   {
     id: 5,
     title: 'Lucas de Oliveira Martins',
-    company: 'GOVERNO DO ESTADO DE MINAS GERAIS',
+    categoryId: 4,
+    productId: 2,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(34) 98900-9999',
@@ -120,7 +114,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-05',
     createdAt: '2026-05-31T10:50:00',
     bank: 'Caixa Econômica',
-    operation: OPERATIONS[3],
     timeline: [
       { id: 1, date: '2026-05-31T10:50:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-06-01T15:00:00', title: 'Documento enviado ao cliente', userName: 'Larissa Melo' },
@@ -130,7 +123,8 @@ const DEALS: DealCard[] = [
   {
     id: 6,
     title: 'Fátima Gomes de Souza',
-    company: 'SIAPE',
+    categoryId: 1,
+    productId: 3,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(11) 99999-9999',
@@ -142,7 +136,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-12',
     createdAt: '2026-05-29T08:40:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2],
     timeline: [
       { id: 1, date: '2026-05-29T08:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-06-01T11:00:00', title: 'Reunião de alinhamento', userName: 'Marina Lopes' },
@@ -152,7 +145,8 @@ const DEALS: DealCard[] = [
   {
     id: 7,
     title: 'Marina Lopes de Almeida',
-    company: 'INSS',
+    categoryId: 5,
+    productId: 3,
     ownerId: 1,
     ownerName: 'Diego Sales',
     phone: '(98) 99999-9999',
@@ -164,7 +158,6 @@ const DEALS: DealCard[] = [
     dueDate: '2026-06-12',
     createdAt: '2026-05-29T08:40:00',
     bank: 'Itaú',
-    operation: OPERATIONS[2],
     timeline: [
       { id: 1, date: '2026-05-29T08:40:00', title: 'Negócio criado', userName: 'Diego Sales' },
       { id: 2, date: '2026-06-05T14:25:00', title: 'Proposta negociada', userName: 'Diego Sales' },

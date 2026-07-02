@@ -13,7 +13,22 @@
 
     <section class="relative mx-auto w-full max-w-md flex items-center">
       <div class="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-panel backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 md:p-8">
-        <h1 class="mt-2 text-3xl font-semibold text-center">CRM</h1>
+        <div class="mx-auto flex justify-center">
+          <img
+            v-if="settings.logoDataUrl"
+            :src="settings.logoDataUrl"
+            :alt="`${settings.companyName} logo`"
+            class="h-14 max-w-40 object-contain"
+          >
+          <span
+            v-else
+            class="flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold shadow-sm"
+            :style="{ backgroundColor: settings.primaryColor, color: settings.primaryTextColor }"
+          >
+            {{ brandInitials }}
+          </span>
+        </div>
+        <h1 class="mt-3 text-center text-3xl font-semibold priority-color">{{ settings.companyName }}</h1>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 text-center">
           Conectando você aos seus clientes. Faça login para acessar seu pipeline e acelerar suas vendas.
         </p>
@@ -30,6 +45,8 @@
 import LoginForm from '~/components/auth/LoginForm.vue'
 const { isAuthenticated } = useAuthMock()
 const { mode, toggleTheme } = useTheme()
+const { settings } = useBranding()
+const brandInitials = computed(() => settings.value.companyName.slice(0, 2).toUpperCase())
 definePageMeta({
   layout: false // Remove o layout default para esta página específica
 })
