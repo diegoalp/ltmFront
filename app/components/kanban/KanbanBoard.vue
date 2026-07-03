@@ -15,10 +15,10 @@
       <div class="flex min-w-max gap-3">
         <KanbanColumn 
           class="bg-slate-200/50 dark:bg-slate-800 rounded-lg p-3"
-          v-for="column in columns"
+          v-for="column in boardColumns"
           :key="column.id"
           :column="column"
-          :cards="cardsByColumn[column.id]"
+          :cards="boardCardsByColumn[String(column.id)] ?? []"
           @move-card="handleMoveCard"
         />
       </div>
@@ -27,13 +27,47 @@
 </template>
 
 <script setup lang="ts">
-const { columns, cardsByColumn, totalPipeline, moveDeal } = useKanbanData()
+import type { DealCard, KanbanColumn } from '~/types/crm'
 
-const totalFormatted = computed(() => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(totalPipeline.value)
+const props = withDefaults(defineProps<{
+  columns?: KanbanColumn[]
+  cardsByColumn?: Record<string, DealCard[]>
+  total?: number
+}>(), {
+  columns: undefined,
+  cardsByColumn: undefined,
+  total: undefined
 })
 
-const handleMoveCard = (cardId: number, stage: 1 | 2 | 3 | 4 | 5 | 6) => {
-  moveDeal(cardId, stage)
+const emit = defineEmits<{
+  (event: 'move-card', cardId: number, stage: KanbanColumn['id']): void
+}>()
+
+const { columns, cardsByColumn, totalPipeline, moveDeal } = useKanbanData()
+
+const boardColumns = computed(() => props.columns ?? columns.value)
+
+const boardCardsByColumn = computed<Record<string, DealCard[]>>(() => {
+  if (props.cardsByColumn) {
+    return props.cardsByColumn
+  }
+
+  return Object.fromEntries(Object.entries(cardsByColumn.value).map(([key, value]) => [String(key), value]))
+})
+
+const boardTotal = computed(() => props.total ?? totalPipeline.value)
+
+const totalFormatted = computed(() => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(boardTotal.value)
+})
+
+const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
+  emit('move-card', cardId, stage)
+
+  if (props.columns) {
+    return
+  }
+
+  moveDeal(cardId, stage as 1 | 2 | 3 | 4 | 5 | 6)
 }
 </script>

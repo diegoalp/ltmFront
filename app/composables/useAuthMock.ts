@@ -3,7 +3,7 @@ import type { CRMUser, LoginPayload } from '~/app/types/crm'
 const DEMO_USER: CRMUser = {
   id: 'u-001',
   name: 'Diego Sales',
-  role: 'Account Executive',
+  role: 'admin',
   initials: 'DS'
 }
 

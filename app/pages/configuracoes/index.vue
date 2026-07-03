@@ -10,6 +10,29 @@
 
     <!-- Grid em Duas Colunas -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2 dark:text-slate-100">
+            <span class="w-2 h-4 bg-violet-600 rounded-full inline-block"></span>
+            Whitelabel e Segmentos
+          </h2>
+          <p class="text-xs text-gray-400 mt-1 mb-4 dark:text-slate-500">Instale modelos prontos por ramo de atuação com funil, campos, regras e indicadores sugeridos.</p>
+
+          <NuxtLink to="/configuracoes/templates" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group dark:text-slate-300 dark:hover:bg-slate-800">
+            <span>Templates de operação</span>
+            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </NuxtLink>
+          <NuxtLink to="/configuracoes/funis" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group dark:text-slate-300 dark:hover:bg-slate-800">
+            <span>Múltiplos funis</span>
+            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </NuxtLink>
+          <NuxtLink to="/configuracoes/campos" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group dark:text-slate-300 dark:hover:bg-slate-800">
+            <span>Construtor de ficha e campos</span>
+            <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </NuxtLink>
+        </div>
+      </div>
+
       <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2">
         <div>
           <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -73,27 +96,35 @@
               <span>Tabulações (Status)</span>
               <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
             </NuxtLink>
+            <NuxtLink to="/configuracoes/permissoes" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
+              <span>Papéis e Permissões</span>
+              <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </NuxtLink>
           </nav>
         </div>
       </div>
 
       <!-- Seção: Sistema & Conexões -->
-      <!-- <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
         <div>
-          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2 dark:text-slate-100">
             <span class="w-2 h-4 bg-amber-500 rounded-full inline-block"></span>
-            Sistema & Conexões
+            Automação e Captação
           </h2>
-          <p class="text-xs text-gray-400 mt-1 mb-4">Configure chaves de API, Webhooks e integrações com plataformas externas.</p>
+          <p class="text-xs text-gray-400 mt-1 mb-4 dark:text-slate-500">Configure regras operacionais e entradas públicas para captação de leads.</p>
           
           <nav class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <NuxtLink to="/configuracoes/integracoes" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group">
-              <span>Integrações (WhatsApp, Webhooks, Facebook)</span>
+            <NuxtLink to="/configuracoes/automacoes" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group dark:text-slate-300 dark:hover:bg-slate-800">
+              <span>Automações quando/então</span>
+              <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </NuxtLink>
+            <NuxtLink to="/configuracoes/formularios" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group dark:text-slate-300 dark:hover:bg-slate-800">
+              <span>Formulários de captação</span>
               <span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span>
             </NuxtLink>
           </nav>
         </div>
-      </div> -->
+      </div>
 
     </div>
   </div>

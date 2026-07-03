@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import Draggable from 'vuedraggable'
-import type { DealCard, DealStage, KanbanColumn as ColumnType } from '~/types/crm'
+import type { DealCard, KanbanColumn as ColumnType } from '~/types/crm'
 import KanbanCard from '~/components/kanban/KanbanCard.vue'
 
 const props = defineProps<{
@@ -48,7 +48,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (event: 'move-card', cardId: number, stage: DealStage): void
+  (event: 'move-card', cardId: number, stage: ColumnType['id']): void
 }>()
 
 const localCards = ref<DealCard[]>([])

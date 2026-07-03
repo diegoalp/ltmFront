@@ -65,8 +65,8 @@ const menuItems = computed<MenuItem[]>(() => [
   {
     label: 'Pipeline',
     icon: 'view_kanban',
-    to: '/#pipeline',
-    isActive: route.path === '/' && route.hash === '#pipeline'
+    to: '/pipeline',
+    isActive: route.path === '/pipeline'
   },
   {
     label: 'Configurações',

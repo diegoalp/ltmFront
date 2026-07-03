@@ -36,13 +36,27 @@
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Responsável: {{ deal.ownerName }} • Criado em {{ formatDate(deal.createdAt) }}</p>
           </div>
 
-          <NuxtLink
-            to="/"
-            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            <Icon name="mdi:arrow-left" size="16" />
-            Voltar ao Kanban
-          </NuxtLink>
+          <div class="flex flex-wrap items-center gap-2">
+            <span v-if="isDealLost" class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+              Negócio perdido
+            </span>
+            <button
+              type="button"
+              @click="openLossModal"
+              :disabled="isDealLost"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-slate-800"
+            >
+              <Icon name="mdi:close-circle-outline" size="16" />
+              {{ isDealLost ? 'Negócio perdido' : 'Perder negócio' }}
+            </button>
+            <NuxtLink
+              to="/"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <Icon name="mdi:arrow-left" size="16" />
+              Voltar ao Kanban
+            </NuxtLink>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -223,6 +237,55 @@
               </div>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Conversa no WhatsApp</h3>
+                  <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Amostra do fluxo de conversas do CRM</p>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  Demo
+                </span>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+                <div class="flex items-center gap-2">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-white">
+                    {{ deal.title.split(' ').slice(0, 2).map((word: string) => word[0]).join('').toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ deal.title }}</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Online • integração futura</p>
+                  </div>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                  <div v-for="message in conversationMessages" :key="message.id" class="flex" :class="message.sender === 'agent' ? 'justify-end' : 'justify-start'">
+                    <div class="max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm" :class="message.sender === 'agent' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'">
+                      <p>{{ message.text }}</p>
+                      <p class="mt-1 text-[10px] opacity-70">{{ message.timestamp }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                  <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Mensagem</label>
+                  <div class="mt-2 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value="Olá! Estou disponível para te ajudar."
+                      disabled
+                      class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
+                    />
+                    <button type="button" disabled class="rounded-xl bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      Enviar
+                    </button>
+                  </div>
+                  <p class="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Esta área representa a conversa de amostra até a integração real.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Documentos</h3>
               
               <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 transition mb-4">
@@ -265,6 +328,39 @@
         </div>
       </section>
     </main>
+
+    <div v-if="showLossModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+      <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Encerrar negócio sem sucesso</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Selecione um motivo para registrar a perda.</p>
+          </div>
+          <button type="button" @click="showLossModal = false" class="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+            <Icon name="mdi:close" size="18" />
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300" for="loss-reason">
+            Motivo da perda
+          </label>
+          <select id="loss-reason" v-model="selectedLossReason" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+            <option value="" disabled>Selecione um motivo</option>
+            <option v-for="reason in lossReasons" :key="reason" :value="reason">{{ reason }}</option>
+          </select>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2">
+          <button type="button" @click="showLossModal = false" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800">
+            Cancelar
+          </button>
+          <button type="button" @click="confirmLoseDeal" :disabled="!selectedLossReason" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60">
+            Salvar perda
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -294,6 +390,14 @@ const product = computed(() => deal.value ? productById(deal.value.productId) : 
 const categoryName = computed(() => category.value?.name ?? 'Sem categoria')
 const productName = computed(() => product.value?.name ?? 'Sem produto')
 const productClass = computed(() => product.value?.color ?? 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300')
+const lossReasons = ['Preço acima do esperado', 'Cliente desistiu', 'Não houve retorno', 'Produto não atende', 'Concorrência venceu', 'Outros']
+const showLossModal = ref(false)
+const selectedLossReason = ref('')
+const defaultConversationMessages = [
+  { id: 1, sender: 'agent' as const, text: 'Olá! Estou acompanhando sua solicitação no CRM.', timestamp: '09:15' },
+  { id: 2, sender: 'customer' as const, text: 'Perfeito, estou aguardando as instruções.', timestamp: '09:17' },
+  { id: 3, sender: 'agent' as const, text: 'Já enviei a simulação para análise. Pode me responder aqui.', timestamp: '09:20' }
+]
 
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')
@@ -306,6 +410,12 @@ if (process.client && !deal.value) {
 const stageLabel = computed(() => {
   return columns.value.find((column) => column.id === deal.value?.stage)?.title ?? 'Desconhecido'
 })
+
+const conversationMessages = computed(() => {
+  return deal.value?.conversation?.length ? deal.value.conversation : defaultConversationMessages
+})
+
+const isDealLost = computed(() => (deal.value?.status ?? 'active') === 'lost')
 
 const timeline = computed(() => {
   return [...(deal.value?.timeline ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -321,6 +431,28 @@ const changeStage = (stage: number) => {
   const nextId = (deal.value.timeline.reduce((max, it) => Math.max(max, it.id), 0) || 0) + 1
   const stageName = columns.value.find((c) => c.id === stage)?.title ?? `Fase ${stage}`
   deal.value.timeline.push({ id: nextId, date: new Date().toISOString(), title: `Movido para ${stageName}`, userName: user.value?.name ?? 'Sistema' })
+}
+
+const openLossModal = () => {
+  selectedLossReason.value = ''
+  showLossModal.value = true
+}
+
+const confirmLoseDeal = () => {
+  if (!deal.value || !selectedLossReason.value) return
+
+  deal.value.status = 'lost'
+  deal.value.lossReason = selectedLossReason.value
+  deal.value.timeline = deal.value.timeline ?? []
+  const nextId = (deal.value.timeline.reduce((max, it) => Math.max(max, it.id), 0) || 0) + 1
+  deal.value.timeline.push({
+    id: nextId,
+    date: new Date().toISOString(),
+    title: `Negócio perdido: ${selectedLossReason.value}`,
+    userName: user.value?.name ?? 'Sistema'
+  })
+
+  showLossModal.value = false
 }
 // Cálculo dinâmico da idade baseado na data de nascimento do cliente
 const customerAge = computed(() => {
