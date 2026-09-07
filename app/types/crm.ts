@@ -6,6 +6,7 @@ export interface CRMCategory {
   segment: string
   description: string
   active: boolean
+  funnelIds: string[]
 }
 
 export type ProductFieldType = 'text' | 'currency' | 'number' | 'group'
@@ -29,6 +30,7 @@ export interface CRMProduct {
   description: string
   color: string
   categoryIds: number[]
+  funnelIds: string[]
   fields: ProductField[]
 }
 
@@ -37,7 +39,11 @@ export interface CRMUser {
   name: string
   role: string
   initials: string
+  instanceId?: number | string | null
+  funnelId?: number | string | null
 }
+
+export interface CRMInstance { id: number | string, name: string, expirationDate?: string | null, isExpired?: boolean }
 
 export interface DealTimelineItem {
   id: number
@@ -53,9 +59,24 @@ export interface DealConversationMessage {
   timestamp: string
 }
 
+export interface CRMDocument {
+  id: number
+  title: string
+  fileName: string
+  fileUrl: string
+  mimeType: string | null
+  createdAt: string | null
+}
+
+export interface CRMCatalogItem { id: number, name: string, color?: string | null, active: boolean }
+export interface CRMActivityType extends CRMCatalogItem { funnelIds: string[] }
+export interface CRMNote { id: number, body: string, authorName: string, createdAt: string }
+export interface CRMActivity { id: number, title: string, description: string, scheduledAt: string, status: 'pending' | 'completed' | 'cancelled', activityTypeId: number, activityTypeName: string, activityTypeColor: string, ownerName: string }
+
 export interface KanbanColumn {
   id: DealStage | string
   title: string
+  isFinal?: boolean
 }
 
 export interface DealCard {
@@ -66,7 +87,7 @@ export interface DealCard {
   birthDate: string
   categoryId: number
   bank: string
-  productId: number
+  productId: number | null
   ownerId: number
   ownerName: string
   stage: DealStage
@@ -75,11 +96,14 @@ export interface DealCard {
   value: number
   priority: 'low' | 'medium' | 'high'
   dueDate: string
+  expirationDate?: string | null
   createdAt: string
   timeline: DealTimelineItem[]
-  status?: 'active' | 'lost'
+  status?: 'active' | 'lost' | 'won'
   lossReason?: string | null
   conversation?: DealConversationMessage[]
+  customFields: Record<string, unknown>
+  clientCustomFields: Record<string, unknown>
 }
 
 export interface LoginPayload {
@@ -97,8 +121,11 @@ export interface CRMBrandingSettings {
 }
 
 export interface OperationTemplateStage {
+  id?: number
   title: string
   expirationLabel: string
+  color?: string | null
+  isFinal?: boolean
 }
 
 export interface OperationTemplateField {
@@ -142,14 +169,34 @@ export interface CRMFunnel {
 }
 
 export type CRMCustomFieldType = OperationTemplateField['type'] | 'textarea' | 'checkbox'
+export type CRMCustomFieldSection = 'business' | 'product' | 'client'
+export type CRMCustomSubFieldType = Exclude<CRMCustomFieldType, 'group'>
+export interface CRMCustomSubField {
+  key: string
+  label: string
+  type: CRMCustomSubFieldType
+  required: boolean
+  options: string[]
+  position: number
+}
+export interface CRMCustomFieldCondition {
+  field: 'category_id' | 'product_id' | 'funnel_id'
+  operator: 'equals' | 'not_equals'
+  value: string[]
+}
 
 export interface CRMCustomField {
   id: string
   label: string
-  section: string
+  section: CRMCustomFieldSection
   type: CRMCustomFieldType
   required: boolean
+  defaultValue: boolean | null
+  isBusinessValue: boolean
   visibleWhen: string
+  conditions: CRMCustomFieldCondition[]
+  options: string[]
+  subFields: CRMCustomSubField[]
 }
 
 export interface CRMAutomationRule {

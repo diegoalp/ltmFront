@@ -54,12 +54,12 @@
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Governança</p>
         <h2 class="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">Configuração restrita</h2>
-        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Apenas administradores alteram templates, automações, identidade e estrutura da instância.</p>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Apenas administradores alteram a identidade e a estrutura da instância.</p>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-const { roles, permissionLabels, togglePermission } = useWhitelabelMock()
+const { roles, permissionLabels, togglePermission } = useCrmSettings()
 </script>

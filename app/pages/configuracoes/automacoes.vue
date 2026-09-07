@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-const { automations, addAutomation, toggleAutomation } = useWhitelabelMock()
+const { automations, addAutomation, toggleAutomation } = useCrmSettings()
 
 const form = reactive({
   name: '',

@@ -1,16 +1,15 @@
 import type { CRMBrandingSettings } from '~/types/crm'
 
-const STORAGE_KEY = 'crm-branding-settings'
-
 const defaultBranding: CRMBrandingSettings = {
-  companyName: 'LTM',
+  companyName: 'CRM',
   logoDataUrl: null,
-  primaryColor: '#625751',
+  primaryColor: '#0550ac',
   secondaryColor: '#0f766e',
-  accentColor: '#f59e0b',
+  accentColor: '#0ae43a',
   primaryTextColor: '#ffffff'
 }
 
+// Presets are visual shortcuts; the selected configuration still comes from the API.
 const colorPresets = [
   {
     name: 'LTM',
@@ -43,13 +42,16 @@ const colorPresets = [
 ]
 
 const isHexColor = (value: string) => /^#[0-9a-f]{6}$/i.test(value)
+const isLogoUrl = (value: unknown): value is string => typeof value === 'string'
+  && (/^https?:\/\//i.test(value) || value.startsWith('/storage/'))
 
+/** Prevents incomplete or invalid API data from breaking the theme. */
 const sanitizeBranding = (value: Partial<CRMBrandingSettings>): CRMBrandingSettings => {
   return {
     companyName: typeof value.companyName === 'string' && value.companyName.trim()
       ? value.companyName.trim()
       : defaultBranding.companyName,
-    logoDataUrl: typeof value.logoDataUrl === 'string' && value.logoDataUrl.startsWith('data:image/')
+    logoDataUrl: isLogoUrl(value.logoDataUrl)
       ? value.logoDataUrl
       : null,
     primaryColor: typeof value.primaryColor === 'string' && isHexColor(value.primaryColor)
@@ -68,9 +70,13 @@ const sanitizeBranding = (value: Partial<CRMBrandingSettings>): CRMBrandingSetti
 }
 
 export const useBranding = () => {
+  const { request, token, instanceId } = useApi()
   const settings = useState<CRMBrandingSettings>('crm-branding-settings', () => ({ ...defaultBranding }))
   const uploadError = useState<string | null>('crm-branding-upload-error', () => null)
+  const loadedInstanceId = useState<string | null>('crm-branding-instance-id', () => null)
+  const brandingLoading = useState('crm-branding-loading', () => false)
 
+  /** Applies colors as CSS variables shared by components. */
   const applyBranding = (nextSettings: CRMBrandingSettings) => {
     if (!import.meta.client) {
       return
@@ -83,23 +89,24 @@ export const useBranding = () => {
     root.style.setProperty('--crm-primary-text', nextSettings.primaryTextColor)
   }
 
-  const persistBranding = (nextSettings: CRMBrandingSettings) => {
-    if (!import.meta.client) {
-      return
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSettings))
-  }
-
-  const updateBranding = (nextSettings: Partial<CRMBrandingSettings>) => {
-    settings.value = sanitizeBranding({
+  /** Persists in the active instance, then applies the confirmed settings. */
+  const updateBranding = async (nextSettings: Partial<CRMBrandingSettings>) => {
+    const sanitized = sanitizeBranding({
       ...settings.value,
       ...nextSettings
     })
-    persistBranding(settings.value)
+    if (token.value && instanceId.value) {
+      const { logoDataUrl: _logoDataUrl, ...brandingPayload } = sanitized
+      const response = await request<{ data: { branding: CRMBrandingSettings } }>('/branding', { method: 'PUT', body: brandingPayload })
+      settings.value = sanitizeBranding(response.data.branding)
+      loadedInstanceId.value = String(instanceId.value)
+    } else {
+      settings.value = sanitized
+    }
     applyBranding(settings.value)
   }
 
+  /** Validates the image and uploads the binary file to the active instance folder. */
   const setLogoFromFile = async (file: File) => {
     uploadError.value = null
 
@@ -113,54 +120,64 @@ export const useBranding = () => {
       return
     }
 
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = () => reject(new Error('Não foi possível carregar a imagem.'))
-      reader.readAsDataURL(file)
-    })
-
-    updateBranding({ logoDataUrl: dataUrl })
+    const body = new FormData()
+    body.append('logo', file)
+    const response = await request<{ data: { branding: CRMBrandingSettings } }>('/branding/logo', { method: 'POST', body })
+    settings.value = sanitizeBranding(response.data.branding)
+    loadedInstanceId.value = String(instanceId.value)
+    applyBranding(settings.value)
   }
 
-  const removeLogo = () => {
-    updateBranding({ logoDataUrl: null })
+  const removeLogo = async () => {
+    if (!token.value || !instanceId.value) return
+    const response = await request<{ data: { branding: CRMBrandingSettings } }>('/branding/logo', { method: 'DELETE' })
+    settings.value = sanitizeBranding(response.data.branding)
+    loadedInstanceId.value = String(instanceId.value)
+    applyBranding(settings.value)
   }
 
-  const resetBranding = () => {
+  const resetBranding = async () => {
     uploadError.value = null
     settings.value = { ...defaultBranding }
-    persistBranding(settings.value)
     applyBranding(settings.value)
+    if (token.value && instanceId.value) {
+      await request('/branding/logo', { method: 'DELETE' })
+      const { logoDataUrl: _logoDataUrl, ...brandingPayload } = settings.value
+      await request('/branding', { method: 'PUT', body: brandingPayload })
+      loadedInstanceId.value = String(instanceId.value)
+    }
   }
 
-  const apiPayload = computed(() => ({
-    companyName: settings.value.companyName,
-    logoDataUrl: settings.value.logoDataUrl,
-    colors: {
-      primary: settings.value.primaryColor,
-      secondary: settings.value.secondaryColor,
-      accent: settings.value.accentColor,
-      primaryText: settings.value.primaryTextColor
+  const apiPayload = computed(() => ({ ...settings.value }))
+
+  /** Reloads branding for the authenticated instance. */
+  const refreshBranding = async () => {
+    if (!token.value || !instanceId.value || brandingLoading.value) return
+    brandingLoading.value = true
+    try {
+      const response = await request<{ data: { branding: CRMBrandingSettings } }>('/branding')
+      settings.value = sanitizeBranding(response.data.branding)
+      loadedInstanceId.value = String(instanceId.value)
+      applyBranding(settings.value)
+    } catch (cause) {
+      uploadError.value = cause instanceof Error ? cause.message : 'Não foi possível carregar a identidade visual.'
+    } finally {
+      brandingLoading.value = false
     }
-  }))
+  }
 
   onMounted(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-
-    if (!stored) {
-      applyBranding(settings.value)
-      return
-    }
-
-    try {
-      settings.value = sanitizeBranding(JSON.parse(stored))
-    } catch {
-      settings.value = { ...defaultBranding }
-    }
-
     applyBranding(settings.value)
+    if (token.value && instanceId.value && loadedInstanceId.value !== String(instanceId.value)) void refreshBranding()
   })
+
+  watch(instanceId, (nextId, previousId) => {
+    if (!import.meta.client || String(nextId || '') === String(previousId || '')) return
+    settings.value = { ...defaultBranding }
+    loadedInstanceId.value = null
+    applyBranding(settings.value)
+    if (nextId && token.value) void refreshBranding()
+  }, { flush: 'post' })
 
   return {
     settings,
@@ -170,6 +187,7 @@ export const useBranding = () => {
     updateBranding,
     setLogoFromFile,
     removeLogo,
-    resetBranding
+    resetBranding,
+    refreshBranding
   }
 }

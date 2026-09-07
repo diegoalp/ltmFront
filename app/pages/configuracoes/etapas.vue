@@ -18,14 +18,14 @@
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div v-if="etapas.length === 0" class="p-8 text-center text-gray-500 text-sm">
+      <div v-if="stages.length === 0" class="p-8 text-center text-gray-500 text-sm">
         Nenhuma etapa cadastrada. Clique em "+ Nova Etapa" para começar.
       </div>
       
       <ul v-else class="divide-y divide-gray-100">
         <li 
-          v-for="(etapa, index) in etapas" 
-          :key="etapa.id" 
+          v-for="(stage, index) in stages"
+          :key="stage.id"
           class="p-4 hover:bg-gray-50 flex items-center justify-between gap-4 transition"
         >
           <div class="flex items-center gap-3">
@@ -33,10 +33,11 @@
               {{ index + 1 }}
             </span>
             <div>
-              <h3 class="text-sm font-semibold text-gray-900">{{ etapa.titulo }}</h3>
+              <h3 class="text-sm font-semibold text-gray-900">{{ stage.title }}</h3>
+              <span v-if="stage.isFinal" class="mt-1 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Fase final</span>
               <p class="text-xs text-gray-500 mt-0.5">
-                <span v-if="etapa.tempoExpiracao">
-                  Expira em {{ etapa.tempoExpiracao }} {{ etapa.unidadeExpiracao === 'dias' ? 'dias' : 'horas' }}
+                <span v-if="stage.expirationTime">
+                  Expira em {{ stage.expirationTime }} {{ stage.expirationUnit === 'dias' ? 'dias' : 'horas' }}
                 </span>
                 <span v-else>
                   Sem tempo de expiração
@@ -47,7 +48,7 @@
 
           <div class="flex items-center gap-1">
             <button 
-              @click="moverEtapa(index, 'subir')" 
+              @click="moveStage(index, 'up')"
               :disabled="index === 0"
               class="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition"
               title="Mover para cima"
@@ -55,15 +56,15 @@
               ▲
             </button>
             <button 
-              @click="moverEtapa(index, 'descer')" 
-              :disabled="index === etapas.length - 1"
+              @click="moveStage(index, 'down')"
+              :disabled="index === stages.length - 1"
               class="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition"
               title="Mover para baixo"
             >
               ▼
             </button>
             <button 
-              @click="removerEtapa(etapa.id)"
+              @click="deleteStage(stage.id)"
               class="p-1.5 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition ml-2"
               title="Excluir"
             >
@@ -79,14 +80,14 @@
         
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 class="text-base font-semibold text-gray-900">Nova Etapa do Funil</h3>
-          <button @click="fecharModal" class="text-gray-400 hover:text-gray-500 text-lg">&times;</button>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-500 text-lg">&times;</button>
         </div>
 
-        <form @submit.prevent="salvarEtapa" class="p-6 space-y-4">
+        <form @submit.prevent="saveStage" class="p-6 space-y-4">
           <div>
             <label for="titulo" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Título da Etapa *</label>
             <input 
-              v-model="form.titulo"
+              v-model="form.title"
               type="text" 
               id="titulo" 
               required
@@ -100,7 +101,7 @@
             
             <div class="grid grid-cols-3 gap-2 mt-1.5">
               <input 
-                v-model.number="form.tempoExpiracao"
+                v-model.number="form.expirationTime"
                 type="number" 
                 id="tempoExpiracao" 
                 min="1"
@@ -108,7 +109,7 @@
                 class="col-span-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <select 
-                v-model="form.unidadeExpiracao"
+                v-model="form.expirationUnit"
                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
                 <option value="dias">Dias</option>
@@ -118,10 +119,15 @@
             <p class="mt-1.5 text-xs text-gray-400">Tempo máximo que um card pode ficar parado nesta fase antes de expirar.</p>
           </div>
 
+          <label class="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <input v-model="form.isFinal" type="checkbox" class="mt-0.5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500">
+            <span><strong class="block text-sm text-emerald-900">Fase de finalização do lead</strong><span class="text-xs text-emerald-700">Exibe a opção de ganhar o negócio quando o lead chegar nesta fase.</span></span>
+          </label>
+
           <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end gap-3">
             <button 
               type="button" 
-              @click="fecharModal" 
+              @click="closeModal"
               class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-lg transition"
             >
               Cancelar
@@ -141,59 +147,57 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+const { request } = useApi()
+const { stages, loadStages, addStage, removeStage } = useStages()
+const { funnels } = useCrmSettings()
+const toast = useToast()
 
-// Estado do Modal
+onMounted(loadStages)
+
 const isModalOpen = ref(false)
 
-// Dados simulados (Mock) com suporte a dias e horas
-const etapas = ref([
-  { id: 1, titulo: 'Contato Inicial', tempoExpiracao: 2, unidadeExpiracao: 'dias' },
-  { id: 2, titulo: 'Proposta Enviada', tempoExpiracao: 12, unidadeExpiracao: 'horas' },
-  { id: 3, titulo: 'Negociação', tempoExpiracao: null, unidadeExpiracao: 'dias' },
-])
-
-// Formulário Limpo com valor padrão para a unidade
-const formLimpo = () => ({
-  titulo: '',
-  tempoExpiracao: null,
-  unidadeExpiracao: 'dias'
+const emptyForm = () => ({
+  title: '',
+  expirationTime: null,
+  expirationUnit: 'dias',
+  isFinal: false
 })
 
-const form = ref(formLimpo())
+const form = ref(emptyForm())
 
-const fecharModal = () => {
+const closeModal = () => {
   isModalOpen.value = false
-  form.value = formLimpo()
+  form.value = emptyForm()
 }
 
-// Salvar Etapa
-const salvarEtapa = () => {
-  if (!form.value.titulo.trim()) return
+const saveStage = async () => {
+  if (!form.value.title.trim()) return
 
-  etapas.value.push({
-    id: Date.now(),
-    titulo: form.value.titulo,
-    tempoExpiracao: form.value.tempoExpiracao || null,
-    unidadeExpiracao: form.value.tempoExpiracao ? form.value.unidadeExpiracao : 'dias'
-  })
+  const funnelId = Number(funnels.value[0]?.id)
+  if (!funnelId) return
+  await addStage({ funnelId, title: form.value.title, expirationTime: form.value.expirationTime || null, expirationUnit: form.value.expirationTime ? form.value.expirationUnit : 'dias', isFinal: form.value.isFinal })
 
-  fecharModal()
+  closeModal()
 }
 
-// Remover Etapa
-const removerEtapa = (id) => {
-  if (confirm('Tem certeza que deseja remover esta etapa do funil?')) {
-    etapas.value = etapas.value.filter(e => e.id !== id)
+const deleteStage = async (id) => {
+  if (await toast.confirm('A etapa será removida permanentemente do funil.', { title: 'Remover etapa?', confirmLabel: 'Remover' })) {
+    try { await removeStage(id); toast.success('Etapa removida com sucesso.') }
+    catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Não foi possível remover a etapa.') }
   }
 }
 
-// Reordenação por Index
-const moverEtapa = (index, direcao) => {
-  const novaPosicao = direcao === 'subir' ? index - 1 : index + 1
-  if (novaPosicao < 0 || novaPosicao >= etapas.value.length) return
+const moveStage = async (index, direction) => {
+  const newPosition = direction === 'up' ? index - 1 : index + 1
+  if (newPosition < 0 || newPosition >= stages.value.length) return
 
-  const elemento = etapas.value.splice(index, 1)[0]
-  etapas.value.splice(novaPosicao, 0, elemento)
+  const movedStage = stages.value.splice(index, 1)[0]
+  stages.value.splice(newPosition, 0, movedStage)
+  for (const [position, stage] of stages.value.entries()) {
+    await request(`/stages/${stage.id}`, { method: 'PATCH', body: { position: position + 101 } })
+  }
+  for (const [position, stage] of stages.value.entries()) {
+    await request(`/stages/${stage.id}`, { method: 'PATCH', body: { position: position + 1 } })
+  }
 }
 </script>

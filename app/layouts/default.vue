@@ -10,6 +10,7 @@
 
       <main class="mx-auto flex w-full max-w-[1500px] p-4 md:p-6">
         <section class="min-w-0 flex-1 space-y-4">
+          <BusinessExpirationAlert />
           <slot />
         </section>
       </main>

@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-const { funnels, publicForms, addPublicForm } = useWhitelabelMock()
+const { funnels, publicForms, addPublicForm } = useCrmSettings()
 
 const draft = reactive({
   name: '',

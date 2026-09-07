@@ -3,7 +3,7 @@
     <header class="flex items-end justify-between gap-4">
       <div>
         <p class="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Pipeline total</p>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Arraste os cards entre as etapas</h2>
+        <h3 class="text-md font-medium text-slate-900 dark:text-slate-100">Arraste os cards entre as etapas</h3>
       </div>
 
       <p class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -14,7 +14,7 @@
     <div class="overflow-x-auto pb-2">
       <div class="flex min-w-max gap-3">
         <KanbanColumn 
-          class="bg-slate-200/50 dark:bg-slate-800 rounded-lg p-3"
+          class="rounded-lg p-3"
           v-for="column in boardColumns"
           :key="column.id"
           :column="column"

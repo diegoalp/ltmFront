@@ -1,11 +1,16 @@
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
-    <!-- <AppHeader /> -->
+  <div class="w-full min-w-0 text-left text-slate-900 dark:text-slate-100">
+    <ClientOnly>
+    <div class="w-full min-w-0">
+      <section v-if="!deal && (initialLoading || dealsLoading)" key="loading" role="status" class="w-full rounded-2xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+        Carregando negócio...
+      </section>
 
-    <main class="mx-auto flex min-h-screen w-full max-w-[1600px] items-start p-4 md:p-6">
-      <!-- <AppSidebar class="hidden lg:block" /> -->
-
-      <section v-if="deal" class="min-w-0 flex-1 space-y-6">
+      <section v-else-if="deal && isDealDisabled(deal)" key="blocked" class="w-full rounded-xl border border-amber-300 bg-amber-50 p-6 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+        <p>Este negócio está bloqueado. Regularize seus negócios expirados para continuar.</p>
+        <NuxtLink to="/" class="mt-3 inline-block font-semibold underline">Voltar ao quadro</NuxtLink>
+      </section>
+      <section v-else-if="deal" key="detail" class="w-full min-w-0 space-y-6 text-left">
         
         <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -26,11 +31,11 @@
 
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
           <div>
-            <div class="grid grid-cols- gap-2">
+            <div class="grid grid-cols-1 gap-2">
               <h1 class="text-3xl font-medium tracking-tight text-slate-900 dark:text-slate-100">{{ deal.title }}</h1>
               <div class="flex gap-3">
                   <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-600/40 dark:text-sky-300 px-2.5 py-1 rounded-md">{{ categoryName }}</span>
-                  <span class="text-xs rounded-md px-2.5 py-1" :class="productClass">{{ productName }}</span>
+                  <span class="text-xs rounded-md px-2.5 py-1" :style="productStyle">{{ productName }}</span>
               </div>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Responsável: {{ deal.ownerName }} • Criado em {{ formatDate(deal.createdAt) }}</p>
@@ -40,10 +45,22 @@
             <span v-if="isDealLost" class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
               Negócio perdido
             </span>
+            <span v-if="isDealWon" class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+              Negócio ganho
+            </span>
+            <button
+              v-if="isCurrentStageFinal && !isDealLost && !isDealWon"
+              type="button"
+              @click="confirmWinDeal"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              <Icon name="mdi:trophy-outline" size="16" />
+              Ganhar negócio
+            </button>
             <button
               type="button"
               @click="openLossModal"
-              :disabled="isDealLost"
+              :disabled="isDealLost || isDealWon"
               class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-slate-800"
             >
               <Icon name="mdi:close-circle-outline" size="16" />
@@ -66,51 +83,51 @@
               <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">Dados do Cliente</h3>
               
               <div class="space-y-4">
-                <div class="grid grid-cols-1 gap-4">
-                  <div>
+                <div v-if="hasClientValue(deal.document) || hasClientValue(deal.profession)" class="grid grid-cols-1 gap-4">
+                  <div v-if="hasClientValue(deal.document)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">CPF</label>
                     <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.document }}</p>
                   </div>
-                  <div>
+                  <div v-if="hasClientValue(deal.profession)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Profissão</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.profession || 'Não informada' }}</p>
+                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.profession }}</p>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4">
-                  <div>
+                <div v-if="hasClientValue(deal.birthDate) || hasClientValue(deal.gender)" class="grid grid-cols-1 gap-4">
+                  <div v-if="hasClientValue(deal.birthDate)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Nascimento (Idade)</label>
                     <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {{ deal.birthDate ? formatDateResume(deal.birthDate) : '00/00/0000' }} 
+                      {{ formatDateResume(deal.birthDate) }} 
                       <span class="text-xs text-slate-500 font-normal">({{ customerAge }} anos)</span>
                     </p>
                   </div>
-                  <div>
+                  <div v-if="hasClientValue(deal.gender)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Sexo</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.gender || 'Não informado' }}</p>
+                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.gender }}</p>
                   </div>
                 </div>
 
-                <div class="pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
-                  <div>
+                <div v-if="[deal.address, deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
+                  <div v-if="hasClientValue(deal.address)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Endereço</label>
                     <p class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight">
-                      {{ deal.address || 'Rua não informada' }}
+                      {{ deal.address }}
                     </p>
                   </div>
                   
-                  <div class="grid grid-cols-3 gap-2 text-xs">
-                    <div>
+                  <div v-if="[deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="grid grid-cols-3 gap-2 text-xs">
+                    <div v-if="hasClientValue(deal.city)">
                       <span class="text-slate-400 block">Cidade</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ deal.city || '-' }}</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ deal.city }}</span>
                     </div>
-                    <div>
+                    <div v-if="hasClientValue(deal.state)">
                       <span class="text-slate-400 block">Estado</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 block">{{ deal.state || '-' }}</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200 block">{{ deal.state }}</span>
                     </div>
-                    <div>
+                    <div v-if="hasClientValue(deal.zipCode)">
                       <span class="text-slate-400 block">CEP</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 block truncate">{{ deal.zipCode || '-' }}</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200 block truncate">{{ deal.zipCode }}</span>
                     </div>
                   </div>
                 </div>
@@ -120,9 +137,16 @@
                     <label class="text-xs text-slate-400 dark:text-slate-500">Valor Negócio</label>
                     <p class="text-base font-bold text-slate-900 dark:text-slate-100">{{ formatCurrency(deal.value) }}</p>
                   </div>
-                  <div>
+                  <div v-if="hasClientValue(deal.bank)">
                     <label class="text-xs text-slate-400 dark:text-slate-500">Banco Origem</label>
                     <p class="text-sm font-semibold truncate text-slate-900 dark:text-slate-100">{{ deal.bank }}</p>
+                  </div>
+                </div>
+
+                <div v-if="clientDetailFields.length" class="space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800/60">
+                  <div v-for="field in clientDetailFields" :key="field.id">
+                    <label class="text-xs font-medium text-slate-400 dark:text-slate-500">{{ field.label }}</label>
+                    <p class="break-words text-sm font-semibold text-slate-900 dark:text-slate-100">{{ displayFieldValue(field, deal.clientCustomFields[field.id]) }}</p>
                   </div>
                 </div>
               </div>
@@ -130,72 +154,39 @@
           </div>
 
           <div class="lg:col-span-2 xl:col-span-2 space-y-6">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div v-if="businessDetailFields.length" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Matrículas</h3>
-                <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">1 ativa</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dados do negócio</h3>
               </div>
-              
-              <div class="grid gap-3 sm:grid-cols-1">
-                <div v-for="mat in [ { numero: '8472910-X', orgao: 'SIAPE', convenio: 'Federal', situacao: 'Ativo Permanente' } ]" :key="mat.numero" class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">Nº {{ mat.numero }}</span>
-                    <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400">{{ mat.situacao }}</span>
-                  </div>
-                  <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/50">
-                    <div>
-                      <p class="text-slate-400">Órgão</p>
-                      <p class="font-semibold text-slate-800 dark:text-slate-200">{{ mat.orgao }}</p>
-                    </div>
-                    <div>
-                      <p class="text-slate-400">Convênio</p>
-                      <p class="font-semibold text-slate-800 dark:text-slate-200">{{ mat.convenio }}</p>
-                    </div>
-                  </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div v-for="field in businessDetailFields" :key="field.id" class="rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
+                  <p class="text-[10px] font-medium uppercase text-slate-400">{{ field.label }}</p>
+                  <p class="mt-1 break-words text-sm font-bold text-slate-900 dark:text-slate-100">{{ displaySubFieldValue(field.type, field.value) }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Contratos</h3>
+            <div v-for="field in repeatableBusinessFields" :key="field.id" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ field.label }}</h3>
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ groupFieldRows(field).length }} {{ groupFieldRows(field).length === 1 ? 'item' : 'itens' }}</span>
               </div>
 
-              <div class="grid gap-4 sm:grid-cols-1 xl:grid-cols-1">
-                <div v-for="contrato in [ { banco: deal.bank, saldo: deal.value * 0.8, parcela: 450.00, totalParc: 84, restParc: 42 } ]" :key="contrato.banco" class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow transition">
-                  <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2">
-                      <Icon name="mdi:bank-outline" class="text-slate-400" size="18" />
-                      <span class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ contrato.banco }}</span>
-                    </div>
-                    <span class="text-[11px] bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 font-semibold px-2 py-0.5 rounded-full">
-                      {{ contrato.restParc }} de {{ contrato.totalParc }} rest.
-                    </span>
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl">
-                      <p class="text-[10px] uppercase text-slate-400 font-medium">Saldo Devedor</p>
-                      <p class="text-base font-bold text-slate-900 dark:text-slate-100">{{ formatCurrency(contrato.saldo) }}</p>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl">
-                      <p class="text-[10px] uppercase text-slate-400 font-medium">Valor Parcela</p>
-                      <p class="text-base font-bold text-slate-900 dark:text-slate-100">{{ formatCurrency(contrato.parcela) }}</p>
-                    </div>
-                  </div>
-
-                  <div class="mt-3">
-                    <div class="flex justify-between text-[10px] text-slate-400 mb-1">
-                      <span>Progresso do contrato</span>
-                      <span>{{ Math.round(((contrato.totalParc - contrato.restParc) / contrato.totalParc) * 100) }}% pago</span>
-                    </div>
-                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                      <div class="bg-emerald-500 h-1.5 rounded-full" :style="{ width: `${((contrato.totalParc - contrato.restParc) / contrato.totalParc) * 100}%` }"></div>
+              <div v-if="groupFieldRows(field).length" class="grid gap-3">
+                <div v-for="(row, rowIndex) in groupFieldRows(field)" :key="rowIndex" class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <div v-for="subField in field.subFields.filter(sub => hasCustomFieldValue(row[sub.key]))" :key="subField.key">
+                      <p class="text-[10px] font-medium uppercase text-slate-400">{{ subField.label }}</p>
+                      <p class="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-200">{{ displaySubFieldValue(subField.type, row[subField.key]) }}</p>
                     </div>
                   </div>
                 </div>
               </div>
+              <p v-else class="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-500 dark:border-slate-800">Nenhum item informado.</p>
             </div>
+
+            <BusinessNotes :business-id="deal.id" />
+            <BusinessActivities :business-id="deal.id" :funnel-id="deal.funnelId" />
 
             <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
@@ -220,7 +211,7 @@
           </div>
 
           <div class="lg:col-span-3 xl:col-span-1 space-y-6">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div v-if="hasClientValue(deal.phone)" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Contatos</h3>
               
               <div class="space-y-2">
@@ -236,85 +227,13 @@
                 </div>
               </div>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <div>
-                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Conversa no WhatsApp</h3>
-                  <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Amostra do fluxo de conversas do CRM</p>
-                </div>
-                <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  Demo
-                </span>
-              </div>
-
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <div class="flex items-center gap-2">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-white">
-                    {{ deal.title.split(' ').slice(0, 2).map((word: string) => word[0]).join('').toUpperCase() }}
-                  </div>
-                  <div>
-                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ deal.title }}</p>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Online • integração futura</p>
-                  </div>
-                </div>
-
-                <div class="mt-3 space-y-2">
-                  <div v-for="message in conversationMessages" :key="message.id" class="flex" :class="message.sender === 'agent' ? 'justify-end' : 'justify-start'">
-                    <div class="max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm" :class="message.sender === 'agent' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'">
-                      <p>{{ message.text }}</p>
-                      <p class="mt-1 text-[10px] opacity-70">{{ message.timestamp }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                  <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Mensagem</label>
-                  <div class="mt-2 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value="Olá! Estou disponível para te ajudar."
-                      disabled
-                      class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
-                    />
-                    <button type="button" disabled class="rounded-xl bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                      Enviar
-                    </button>
-                  </div>
-                  <p class="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Esta área representa a conversa de amostra até a integração real.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Documentos</h3>
-              
-              <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 transition mb-4">
-                <div class="flex flex-col items-center justify-center pt-3 pb-3">
-                  <Icon name="mdi:cloud-upload-outline" size="22" class="text-slate-400 mb-1" />
-                  <p class="text-xs text-slate-500 dark:text-slate-400"><span class="font-semibold">Clique para subir</span> ou arraste</p>
-                  <p class="text-[10px] text-slate-400">RG, CNH, Comprovantes...</p>
-                </div>
-                <input type="file" class="hidden" multiple />
-              </label>
-
-              <div class="space-y-1.5">
-                <div v-for="doc in ['RG_Frente.pdf', 'Comprovante_Residencia.jpeg']" :key="doc" class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/40 text-xs">
-                  <div class="flex items-center gap-2 truncate">
-                    <Icon name="mdi:file-document-outline" class="text-slate-400 flex-shrink-0" size="16" />
-                    <span class="truncate font-medium text-slate-700 dark:text-slate-300">{{ doc }}</span>
-                  </div>
-                  <button class="text-rose-500 hover:text-rose-600 p-1">
-                    <Icon name="mdi:delete-outline" size="16" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            <BusinessDocuments :business-id="deal.id" />
           </div>
 
         </div>
       </section>
 
-      <section v-else class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section v-else key="not-found" class="w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="max-w-sm mx-auto space-y-4">
           <Icon name="mdi:alert-circle-outline" size="48" class="text-slate-300 dark:text-slate-700 mx-auto" />
           <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Ops, esta negociação não existe.</h2>
@@ -327,7 +246,11 @@
           </NuxtLink>
         </div>
       </section>
-    </main>
+    </div>
+    <template #fallback>
+      <section role="status" class="w-full rounded-2xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">Carregando negócio...</section>
+    </template>
+    </ClientOnly>
 
     <div v-if="showLossModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
       <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
@@ -365,19 +288,25 @@
 </template>
 
 <script setup lang="ts">
-// import { inlineConfig } from '#build/types/app.config'
 import AppHeader from '~/components/layout/AppHeader.vue'
 import AppSidebar from '~/components/layout/AppSidebar.vue'
-import { useAuthMock } from '~/composables/useAuthMock'
+import BusinessActivities from '~/components/business/BusinessActivities.vue'
+import BusinessNotes from '~/components/business/BusinessNotes.vue'
+import { useAuth } from '~/composables/useAuth'
 import { useKanbanData } from '~/composables/useKanbanData'
-import type { DealCard } from '~/types/crm'
+import type { CRMCustomField, CRMCustomFieldType, CRMCustomSubFieldType, DealCard, DealStage } from '~/types/crm'
 import { formatCurrency, formatDate } from '~/utils/formatters'
+import { hasCustomFieldValue, formatCustomFieldValue, savedCustomFieldEntries } from '~/utils/customFieldDisplay'
 
+const { isDealDisabled } = useBusinessExpiration()
 const route = useRoute()
-const { user, isAuthenticated } = useAuthMock()
-const { columns, findDealById, moveDeal } = useKanbanData()
-const { categoryById } = useCategoriesMock()
-const { productById } = useProductsMock()
+const { user, isAuthenticated } = useAuth()
+const { request } = useApi()
+const toast = useToast()
+const { columns, findDealById, moveDeal, refreshDeals, dealsLoading } = useKanbanData()
+const { categoryById } = useCategories()
+const { productById } = useProducts()
+const { customFields } = useCustomFields()
 
 const dealId = computed(() => {
   const rawId = route.params.id
@@ -389,48 +318,77 @@ const category = computed(() => deal.value ? categoryById(deal.value.categoryId)
 const product = computed(() => deal.value ? productById(deal.value.productId) : undefined)
 const categoryName = computed(() => category.value?.name ?? 'Sem categoria')
 const productName = computed(() => product.value?.name ?? 'Sem produto')
-const productClass = computed(() => product.value?.color ?? 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300')
+const productStyle = computed(() => ({
+  backgroundColor: product.value?.color ?? '#E2E8F0',
+  color: product.value?.color ? productTextColor(product.value.color) : '#334155'
+}))
+
+const fieldConditionMatches = (field: CRMCustomField) => field.conditions.every(condition => {
+  if (!deal.value) return false
+  const selected = condition.field === 'funnel_id'
+    ? String(deal.value.funnelId || '')
+    : condition.field === 'category_id'
+      ? String(deal.value.categoryId)
+      : String(deal.value.productId || '')
+  const included = condition.value.includes(selected)
+  return condition.operator === 'equals' ? included : !included
+})
+const applicableFields = computed(() => customFields.value.filter(field => fieldConditionMatches(field)))
+const hasClientValue = hasCustomFieldValue
+const clientDetailFields = computed(() => applicableFields.value.filter(field => field.section === 'client' && field.type !== 'group' && hasClientValue(deal.value?.clientCustomFields[field.id])))
+// Saved values drive the detail view; creation conditions must not hide existing data.
+const businessDetailFields = computed(() => savedCustomFieldEntries(deal.value?.customFields || {}, customFields.value).filter(field => field.type !== 'group'))
+const repeatableBusinessFields = computed(() => customFields.value.filter(field => field.type === 'group' && groupFieldRows(field).length > 0))
+
+const displaySubFieldValue = formatCustomFieldValue
+const displayFieldValue = (field: CRMCustomField, value: unknown) => displaySubFieldValue(field.type, value)
+const groupFieldRows = (field: CRMCustomField) => {
+  const rows = deal.value?.customFields[field.id]
+  return Array.isArray(rows) ? rows.filter(row => row && typeof row === 'object' && field.subFields.some(subField => hasCustomFieldValue(row[subField.key]))) as Array<Record<string, unknown>> : []
+}
+
+const productTextColor = (hex: string) => {
+  const normalized = hex.replace('#', '')
+  const red = Number.parseInt(normalized.slice(0, 2), 16)
+  const green = Number.parseInt(normalized.slice(2, 4), 16)
+  const blue = Number.parseInt(normalized.slice(4, 6), 16)
+  return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? '#0F172A' : '#FFFFFF'
+}
 const lossReasons = ['Preço acima do esperado', 'Cliente desistiu', 'Não houve retorno', 'Produto não atende', 'Concorrência venceu', 'Outros']
 const showLossModal = ref(false)
 const selectedLossReason = ref('')
-const defaultConversationMessages = [
-  { id: 1, sender: 'agent' as const, text: 'Olá! Estou acompanhando sua solicitação no CRM.', timestamp: '09:15' },
-  { id: 2, sender: 'customer' as const, text: 'Perfeito, estou aguardando as instruções.', timestamp: '09:17' },
-  { id: 3, sender: 'agent' as const, text: 'Já enviei a simulação para análise. Pode me responder aqui.', timestamp: '09:20' }
-]
 
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')
 }
 
-if (process.client && !deal.value) {
-  await navigateTo('/')
-}
-
-const stageLabel = computed(() => {
-  return columns.value.find((column) => column.id === deal.value?.stage)?.title ?? 'Desconhecido'
+const initialLoading = ref(true)
+onMounted(async () => {
+  try {
+    if (!deal.value) await refreshDeals()
+  } finally {
+    initialLoading.value = false
+  }
 })
 
-const conversationMessages = computed(() => {
-  return deal.value?.conversation?.length ? deal.value.conversation : defaultConversationMessages
+const stageLabel = computed(() => {
+  return columns.value.find((column) => String(column.id) === deal.value?.funnelStageId)?.title ?? 'Desconhecido'
 })
 
 const isDealLost = computed(() => (deal.value?.status ?? 'active') === 'lost')
+const isDealWon = computed(() => (deal.value?.status ?? 'active') === 'won')
+const isCurrentStageFinal = computed(() => columns.value.some(column => column.isFinal && String(column.id) === String(deal.value?.funnelStageId)))
 
 const timeline = computed(() => {
   return [...(deal.value?.timeline ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 })
 
-const changeStage = (stage: number) => {
+const changeStage = async (stage: DealStage | string) => {
   if (!deal.value) return
-  if (deal.value.stage === stage) return
+  if (String(deal.value.funnelStageId || deal.value.stage) === String(stage)) return
 
-  moveDeal(deal.value.id, stage as any)
-
-  deal.value.timeline = deal.value.timeline ?? []
-  const nextId = (deal.value.timeline.reduce((max, it) => Math.max(max, it.id), 0) || 0) + 1
-  const stageName = columns.value.find((c) => c.id === stage)?.title ?? `Fase ${stage}`
-  deal.value.timeline.push({ id: nextId, date: new Date().toISOString(), title: `Movido para ${stageName}`, userName: user.value?.name ?? 'Sistema' })
+  await moveDeal(deal.value.id, stage)
+  await refreshDeals()
 }
 
 const openLossModal = () => {
@@ -438,23 +396,21 @@ const openLossModal = () => {
   showLossModal.value = true
 }
 
-const confirmLoseDeal = () => {
+const confirmWinDeal = async () => {
+  if (!deal.value || !isCurrentStageFinal.value) return
+  if (!await toast.confirm('O negócio será marcado como ganho.', { title: 'Ganhar negócio?', confirmLabel: 'Confirmar ganho' })) return
+  await request(`/businesses/${deal.value.id}`, { method: 'PATCH', body: { status: 2, loss_reason: null } })
+  await refreshDeals()
+}
+
+const confirmLoseDeal = async () => {
   if (!deal.value || !selectedLossReason.value) return
 
-  deal.value.status = 'lost'
-  deal.value.lossReason = selectedLossReason.value
-  deal.value.timeline = deal.value.timeline ?? []
-  const nextId = (deal.value.timeline.reduce((max, it) => Math.max(max, it.id), 0) || 0) + 1
-  deal.value.timeline.push({
-    id: nextId,
-    date: new Date().toISOString(),
-    title: `Negócio perdido: ${selectedLossReason.value}`,
-    userName: user.value?.name ?? 'Sistema'
-  })
-
+  await request(`/businesses/${deal.value.id}`, { method: 'PATCH', body: { loss_reason: selectedLossReason.value, status: 0 } })
+  await refreshDeals()
   showLossModal.value = false
 }
-// Cálculo dinâmico da idade baseado na data de nascimento do cliente
+// Calculate age dynamically from the customer's birth date.
 const customerAge = computed(() => {
   if (!deal.value?.birthDate) return 0
   
@@ -464,7 +420,7 @@ const customerAge = computed(() => {
   let age = today.getFullYear() - birth.getFullYear()
   const monthDiff = today.getMonth() - birth.getMonth()
   
-  // Ajusta se o aniversário ainda não aconteceu no ano corrente
+  // Subtract one year when the birthday has not occurred yet this year.
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--
   }

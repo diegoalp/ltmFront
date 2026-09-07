@@ -49,30 +49,49 @@ type MenuItem = {
 const route = useRoute()
 const { isOpen } = useSidebar()
 const { settings } = useBranding()
+const { user } = useAuth()
 
 const activeItemStyle = computed(() => ({
   backgroundColor: settings.value.primaryColor,
   color: settings.value.primaryTextColor
 }))
 
-const menuItems = computed<MenuItem[]>(() => [
-  {
+const menuItems = computed<MenuItem[]>(() => {
+  const items: MenuItem[] = [{
     label: 'Início',
     icon: 'home',
     to: '/',
     isActive: route.path === '/'
   },
-  {
-    label: 'Pipeline',
-    icon: 'view_kanban',
-    to: '/pipeline',
-    isActive: route.path === '/pipeline'
-  },
-  {
-    label: 'Configurações',
-    icon: 'settings',
-    to: '/configuracoes',
-    isActive: route.path.startsWith('/configuracoes')
+  { label: 'Atividades', icon: 'calendar_month', to: '/atividades', isActive: route.path === '/atividades' },
+  // {
+  //   label: 'Pipeline',
+  //   icon: 'view_kanban',
+  //   to: '/pipeline',
+  //   isActive: route.path === '/pipeline'
+  // }
+]
+
+  if (user.value?.role.toLowerCase() === 'master') {
+    items.push({ label: 'Instâncias', icon: 'domain', to: '/instancias', isActive: route.path === '/instancias' })
   }
-])
+  // if (user.value?.role.toLowerCase() === 'master') {
+  //   items.push({
+  //     label: 'Instâncias',
+  //     icon: 'domain',
+  //     to: '/instancias',
+  //     isActive: route.path === '/instancias'
+  //   })
+  // }
+  if ((['master','admin']).includes(user.value?.role.toLowerCase())) {
+    items.push({
+      label: 'Configurações',
+      icon: 'settings',
+      to: '/configuracoes',
+      isActive: route.path.startsWith('/configuracoes')
+    })
+  }
+
+  return items
+})
 </script>

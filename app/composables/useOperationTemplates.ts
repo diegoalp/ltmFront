@@ -124,10 +124,13 @@ const OPERATION_TEMPLATES: OperationTemplate[] = [
   }
 ]
 
+/** Manages the local template catalog and the installation persisted in Laravel. */
 export const useOperationTemplates = () => {
+  const { request } = useApi()
   const templates = useState<OperationTemplate[]>('operation-templates', () => OPERATION_TEMPLATES)
   const installedTemplate = useState<InstalledOperationTemplate | null>('installed-operation-template', () => null)
 
+  // The API stores only the key; full details come from the local catalog above.
   const activeTemplate = computed(() => {
     if (!installedTemplate.value) {
       return null
@@ -136,22 +139,31 @@ export const useOperationTemplates = () => {
     return templates.value.find((template) => template.id === installedTemplate.value?.templateId) ?? null
   })
 
-  const installTemplate = (templateId: string) => {
-    installedTemplate.value = {
-      templateId,
-      installedAt: new Date().toISOString()
-    }
+  const installTemplate = async (templateId: string) => {
+    const response = await request<{ data: InstalledOperationTemplate }>('/operation-template', {
+      method: 'PUT', body: { templateId }
+    })
+    installedTemplate.value = response.data
+  }
+
+  /** Normalizes snake_case response names into the UI model. */
+  const refreshInstalledTemplate = async () => {
+    const response = await request<{ data: { template_key: string, installed_at: string } | null }>('/operation-template')
+    installedTemplate.value = response.data ? { templateId: response.data.template_key, installedAt: response.data.installed_at } : null
   }
 
   const templateById = (templateId: string) => {
     return templates.value.find((template) => template.id === templateId)
   }
 
+  if (import.meta.client) void refreshInstalledTemplate()
+
   return {
     templates,
     installedTemplate,
     activeTemplate,
     installTemplate,
-    templateById
+    templateById,
+    refreshInstalledTemplate
   }
 }

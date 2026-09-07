@@ -1,6 +1,6 @@
 <template>
   <div class="settings-page w-full">
-    <!-- Cabeçalho da Página -->
+    <!-- Page header -->
     <div class="border-b border-gray-200 pb-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-gray-900">Tabulações (Status)</h1>
@@ -18,9 +18,9 @@
       </div>
     </div>
 
-    <!-- Tabela de Tabulações (Largura Total Corrigida) -->
+    <!-- Dispositions table -->
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden w-full">
-      <div v-if="tabulacoes.length === 0" class="p-8 text-center text-gray-500 text-sm">
+      <div v-if="dispositions.length === 0" class="p-8 text-center text-gray-500 text-sm">
         Nenhuma tabulação cadastrada. Clique em "+ Nova Tabulação" para começar.
       </div>
       
@@ -29,41 +29,41 @@
           <thead class="bg-gray-50 text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200">
             <tr>
               <th class="px-6 py-4 w-5/12">Nome da Tabulação</th>
-              <th class="px-6 py-4 w-4/12">Tipo de Desfecho</th>
-              <th class="px-6 py-4 w-2/12">Uso no Painel</th>
+              <!-- <th class="px-6 py-4 w-4/12">Tipo de Desfecho</th>
+              <th class="px-6 py-4 w-2/12">Uso no Painel</th> -->
               <th class="px-6 py-4 w-1/12 text-right">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-for="tab in tabulacoes" :key="tab.id" class="hover:bg-gray-50/70 transition">
-              <!-- Nome / Descrição -->
+            <tr v-for="disposition in dispositions" :key="disposition.id" class="hover:bg-gray-50/70 transition">
+              <!-- Name and description -->
               <td class="px-6 py-4">
-                <div class="font-semibold text-gray-900 text-sm">{{ tab.nome }}</div>
-                <div v-if="tab.descricao" class="text-xs text-gray-400 mt-0.5">{{ tab.descricao }}</div>
+                <div class="font-semibold text-gray-900 text-sm">{{ disposition.name }}</div>
+                <div v-if="disposition.description" class="text-xs text-gray-400 mt-0.5">{{ disposition.description }}</div>
               </td>
               
               <!-- Tipo de Desfecho (Badge colorido) -->
-              <td class="px-6 py-4 whitespace-nowrap">
+              <!-- <td class="px-6 py-4 whitespace-nowrap">
                 <span 
                   class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border"
-                  :class="getBadgeTipoClass(tab.tipo)"
+                  :class="getTypeBadgeClass(disposition.type)"
                 >
-                  <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="getBolinhaClass(tab.tipo)"></span>
-                  {{ formatTipo(tab.tipo) }}
+                  <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="getTypeDotClass(disposition.type)"></span>
+                  {{ formatType(disposition.type) }}
                 </span>
-              </td>
+              </td> -->
 
               <!-- Visibilidade / Status ativo -->
-              <td class="px-6 py-4 whitespace-nowrap">
+              <!-- <td class="px-6 py-4 whitespace-nowrap">
                 <span class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                  {{ tab.ativo ? 'Disponível' : 'Inativo' }}
+                  {{ disposition.active ? 'Disponível' : 'Inativo' }}
                 </span>
-              </td>
+              </td> -->
 
-              <!-- Botão Deletar -->
+              <!-- Delete action -->
               <td class="px-6 py-4 whitespace-nowrap text-right">
                 <button 
-                  @click="removerTabulacao(tab.id)"
+                  @click="deleteDisposition(disposition.id)"
                   class="p-2 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
                   title="Excluir Tabulação"
                 >
@@ -78,32 +78,32 @@
       </div>
     </div>
 
-    <!-- Modal de Cadastro (Formulário) -->
+    <!-- Creation modal -->
     <div v-if="isModalOpen" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-xl shadow-xl border border-gray-200 max-w-md w-full overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150">
         
-        <!-- Cabeçalho Modal -->
+        <!-- Modal header -->
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 class="text-base font-semibold text-gray-900">Nova Tabulação</h3>
-          <button @click="fecharModal" class="text-gray-400 hover:text-gray-500 text-lg">&times;</button>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-500 text-lg">&times;</button>
         </div>
 
-        <!-- Corpo / Formulário -->
-        <form @submit.prevent="salvarTabulacao" class="p-6 space-y-4">
+        <!-- Modal body and form -->
+        <form @submit.prevent="saveDisposition" class="p-6 space-y-4">
           <div>
             <label for="nome" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Nome do Status *</label>
             <input 
-              v-model="form.nome"
+              v-model="form.name"
               type="text" id="nome" required
               placeholder="Ex: Sem Interesse, Caixa Postal, Lead Ganho..."
               class="mt-1.5 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
 
-          <div>
+          <!-- <div>
             <label for="tipo" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Comportamento do Card (Desfecho) *</label>
             <select 
-              v-model="form.tipo"
+              v-model="form.type"
               id="tipo"
               class="mt-1.5 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
@@ -112,22 +112,22 @@
               <option value="perdida">Negócio Perdido / Descarte (Arquiva sem sucesso)</option>
             </select>
             <p class="mt-1 text-xs text-gray-400">Determina se o card continuará no funil ou se será arquivado automaticamente.</p>
-          </div>
+          </div> -->
 
           <div>
             <label for="descricao" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Descrição interna (Opcional)</label>
             <textarea 
-              v-model="form.descricao"
+              v-model="form.description"
               id="descricao" rows="2"
               placeholder="Explicação curta de quando o vendedor deve usar este status..."
               class="mt-1.5 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             ></textarea>
           </div>
 
-          <!-- Ações Modal -->
+          <!-- Modal actions -->
           <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end gap-3">
             <button 
-              type="button" @click="fecharModal" 
+              type="button" @click="closeModal"
               class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-lg transition"
             >
               Cancelar
@@ -147,73 +147,64 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+const {
+  dispositions,
+  loadDispositions,
+  addDisposition,
+  removeDisposition
+} = useDispositions()
+const toast = useToast()
+
+onMounted(loadDispositions)
 
 const isModalOpen = ref(false)
 
-// Mock inicial de dados simulados (Status práticos de um CRM de crédito/vendas)
-const tabulacoes = ref([
-  { id: 1, nome: 'Ocupado / Caixa Postal', tipo: 'produtivo', descricao: 'Tentativa de contato falhou, o lead será retornado mais tarde.', ativo: true },
-  { id: 2, nome: 'Alô / Mudo ou Caiu', tipo: 'produtivo', descricao: 'Cliente atendeu mas a ligação caiu ou ficou muda.', ativo: true },
-  { id: 3, nome: 'Contrato Assinado (Pago)', tipo: 'ganha', descricao: 'Proposta integrada, averbada e paga na conta do cliente.', ativo: true },
-  { id: 4, nome: 'Sem Margem Disponível', tipo: 'perdida', descricao: 'O cliente não possui margem para a operação de Novo.', ativo: true },
-  { id: 5, nome: 'Recusou Proposta / Juros Altos', tipo: 'perdida', descricao: 'Cliente achou a taxa abusiva ou desisitiu do negócio.', ativo: true },
-])
-
-const formLimpo = () => ({
-  nome: '',
-  tipo: 'produtivo',
-  descricao: ''
+const emptyForm = () => ({
+  name: '',
+  type: 'produtivo',
+  description: ''
 })
 
-const form = ref(formLimpo())
+const form = ref(emptyForm())
 
-const fecharModal = () => {
+const closeModal = () => {
   isModalOpen.value = false
-  form.value = formLimpo()
+  form.value = emptyForm()
 }
 
-// Salvar
-const salvarTabulacao = () => {
-  if (!form.value.nome.trim()) return
+const saveDisposition = async () => {
+  if (!form.value.name.trim()) return
 
-  tabulacoes.value.push({
-    id: Date.now(),
-    nome: form.value.nome,
-    tipo: form.value.tipo,
-    descricao: form.value.descricao || null,
-    ativo: true
-  })
+  await addDisposition({ name: form.value.name, description: form.value.description || null })
 
-  fecharModal()
+  closeModal()
 }
 
-// Remover
-const removerTabulacao = (id) => {
-  if (confirm('Deseja realmente remover esta regra de tabulação? Relatórios antigos que utilizam este status manterão o histórico.')) {
-    tabulacoes.value = tabulacoes.value.filter(t => t.id !== id)
+const deleteDisposition = async (id) => {
+  if (await toast.confirm('Relatórios antigos que utilizam este status manterão o histórico.', { title: 'Remover regra de tabulação?', confirmLabel: 'Remover' })) {
+    try { await removeDisposition(id); toast.success('Regra de tabulação removida com sucesso.') }
+    catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Não foi possível remover a regra de tabulação.') }
   }
 }
 
-// Formatadores visuais de Grid/Badges
-const formatTipo = (tipo) => {
+const formatType = (type) => {
   const labels = {
     produtivo: 'Produtivo',
     ganha: 'Ganhou (Sucesso)',
     perdida: 'Perdeu (Morte do lead)'
   }
-  return labels[tipo] || tipo
+  return labels[type] || type
 }
 
-const getBadgeTipoClass = (tipo) => {
-  if (tipo === 'ganha') return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-  if (tipo === 'perdida') return 'bg-red-50 text-red-700 border-red-200'
+const getTypeBadgeClass = (type) => {
+  if (type === 'ganha') return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  if (type === 'perdida') return 'bg-red-50 text-red-700 border-red-200'
   return 'bg-blue-50 text-blue-700 border-blue-200' // produtivo
 }
 
-const getBolinhaClass = (tipo) => {
-  if (tipo === 'ganha') return 'bg-emerald-500'
-  if (tipo === 'perdida') return 'bg-red-500'
+const getTypeDotClass = (type) => {
+  if (type === 'ganha') return 'bg-emerald-500'
+  if (type === 'perdida') return 'bg-red-500'
   return 'bg-blue-500'
 }
 </script>

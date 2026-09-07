@@ -32,7 +32,8 @@
 
 
       <div class="flex items-center gap-2">
-        
+        <ActivityNotifications />
+        <InstanceSelect />
         <ThemeSwitch />
 
         <button
@@ -50,9 +51,11 @@
 </template>
 
 <script setup lang="ts">
+import ActivityNotifications from '~/components/layout/ActivityNotifications.vue'
 import ThemeSwitch from '~/components/layout/ThemeSwitch.vue'
+import InstanceSelect from '~/components/layout/InstanceSelect.vue'
 import Avatar from './User/Avatar.vue';
-const { logout } = useAuthMock()
+const { logout } = useAuth()
 const { isOpen } = useSidebar()
 const { settings } = useBranding()
 const brandInitials = computed(() => settings.value.companyName.slice(0, 2).toUpperCase())

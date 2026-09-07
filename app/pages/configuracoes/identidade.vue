@@ -4,7 +4,7 @@
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-gray-900">Identidade Visual</h1>
         <p class="mt-2 text-sm text-gray-500">
-          Ajuste a marca do CRM e mantenha os dados prontos para envio posterior à API.
+          Ajuste a marca aplicada ao CRM desta instância.
         </p>
       </div>
 
@@ -48,7 +48,7 @@
                 v-if="draft.logoDataUrl"
                 type="button"
                 class="text-xs font-semibold text-rose-600 transition hover:text-rose-700"
-                @click="draft.logoDataUrl = null"
+                @click="handleRemoveLogo"
               >
                 Remover logo
               </button>
@@ -169,8 +169,8 @@
 
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="text-base font-semibold text-gray-900">Persistência local</h2>
-            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">localStorage</span>
+            <h2 class="text-base font-semibold text-gray-900">Dados persistidos</h2>
+            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">Banco de dados</span>
           </div>
 
           <pre class="mt-4 max-h-60 overflow-auto rounded-xl bg-gray-950 p-4 text-xs text-gray-100">{{ formattedPayload }}</pre>
@@ -206,7 +206,8 @@ import type { CRMBrandingSettings } from '~/types/crm'
 
 type ColorFieldKey = 'primaryColor' | 'secondaryColor' | 'accentColor' | 'primaryTextColor'
 
-const { settings, uploadError, colorPresets, apiPayload, updateBranding, setLogoFromFile, resetBranding } = useBranding()
+const { settings, uploadError, colorPresets, apiPayload, updateBranding, setLogoFromFile, removeLogo, resetBranding } = useBranding()
+const toast = useToast()
 
 const draft = reactive<CRMBrandingSettings>({ ...settings.value })
 
@@ -240,20 +241,45 @@ const handleLogoChange = async (event: Event) => {
     return
   }
 
-  await setLogoFromFile(file)
-  draft.logoDataUrl = settings.value.logoDataUrl
+  try {
+    await setLogoFromFile(file)
+    draft.logoDataUrl = settings.value.logoDataUrl
+    if (!uploadError.value) toast.success('Logotipo salvo para esta instância.')
+  } catch {
+    // Request errors are displayed globally by useApi.
+  }
   input.value = ''
 }
 
-const saveBranding = () => {
-  updateBranding({ ...draft })
-  syncDraft()
+const handleRemoveLogo = async () => {
+  try {
+    await removeLogo()
+    draft.logoDataUrl = null
+    toast.success('Logotipo removido.')
+  } catch {
+    // Request errors are displayed globally by useApi.
+  }
 }
 
-const resetDraft = () => {
-  resetBranding()
-  syncDraft()
+const saveBranding = async () => {
+  try {
+    await updateBranding({ ...draft })
+    syncDraft()
+    toast.success('Identidade visual salva para esta instância.')
+  } catch {
+    // Request errors are displayed globally by useApi.
+  }
 }
 
-onMounted(syncDraft)
+const resetDraft = async () => {
+  try {
+    await resetBranding()
+    syncDraft()
+    toast.success('Identidade visual restaurada para o padrão.')
+  } catch {
+    // Request errors are displayed globally by useApi.
+  }
+}
+
+watch(settings, syncDraft, { immediate: true, deep: true })
 </script>
