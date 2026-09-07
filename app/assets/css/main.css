@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  color-scheme: light;
+  --crm-primary: #625751;
+  --crm-secondary: #0f766e;
+  --crm-accent: #f59e0b;
+  --crm-primary-text: #ffffff;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  #__nuxt {
+    min-height: 100%;
+  }
+
+  body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .priority-color {
+    color: var(--crm-primary);
+  }
+
+  .brand-bg {
+    background-color: var(--crm-primary);
+    color: var(--crm-primary-text);
+  }
+
+  .brand-border {
+    border-color: var(--crm-primary);
+  }
+
+  .brand-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-primary) 35%, transparent);
+  }
+
+  .dark .settings-page .bg-white {
+    @apply bg-slate-900;
+  }
+
+  .dark .settings-page .bg-gray-50 {
+    @apply bg-slate-800/70;
+  }
+
+  .dark .settings-page .bg-gray-100 {
+    @apply bg-slate-800;
+  }
+
+  .dark .settings-page .border-gray-100,
+  .dark .settings-page .border-gray-200,
+  .dark .settings-page .border-gray-300 {
+    @apply border-slate-800;
+  }
+
+  .dark .settings-page .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+    @apply border-slate-800;
+  }
+
+  .dark .settings-page .text-gray-900 {
+    @apply text-slate-100;
+  }
+
+  .dark .settings-page .text-gray-700 {
+    @apply text-slate-300;
+  }
+
+  .dark .settings-page .text-gray-600 {
+    @apply text-slate-300;
+  }
+
+  .dark .settings-page .text-gray-500 {
+    @apply text-slate-400;
+  }
+
+  .dark .settings-page .text-gray-400 {
+    @apply text-slate-500;
+  }
+
+  .dark .settings-page input,
+  .dark .settings-page select,
+  .dark .settings-page textarea {
+    @apply border-slate-700 bg-slate-950 text-slate-100 placeholder-slate-500;
+  }
+
+  .dark .settings-page input[type='checkbox'] {
+    @apply bg-slate-950;
+  }
+
+  .dark .settings-page .hover\:bg-gray-50:hover,
+  .dark .settings-page .hover\:bg-gray-50\/70:hover,
+  .dark .settings-page .hover\:bg-gray-100:hover {
+    @apply bg-slate-800;
+  }
+
+  .dark .settings-page .hover\:text-gray-700:hover,
+  .dark .settings-page .hover\:text-gray-600:hover,
+  .dark .settings-page .hover\:text-gray-500:hover {
+    @apply text-slate-200;
+  }
+
+  .dark .settings-page .hover\:border-gray-300:hover {
+    @apply border-slate-600;
+  }
+
+  .dark .settings-page .shadow-sm,
+  .dark .settings-page .shadow-xl {
+    @apply shadow-black/25;
+  }
+}
