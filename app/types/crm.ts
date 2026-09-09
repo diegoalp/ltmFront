@@ -64,6 +64,7 @@ export interface CRMDocument {
   title: string
   fileName: string
   fileUrl: string
+  downloadUrl: string
   mimeType: string | null
   createdAt: string | null
 }

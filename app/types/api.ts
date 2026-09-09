@@ -14,7 +14,7 @@ export interface ApiAdminUser extends ApiUser { email: string, team_id?: number 
 export interface ApiCustomField { id: number, label: string, section: string, type: string, required: boolean, default_value?: boolean | null, is_business_value?: boolean, visible_when: string, conditions?: Array<{ field: string, operator: string, value: string[] }>, options?: string[], sub_fields?: Array<{ key: string, label: string, type: string, required: boolean, options?: string[], position: number }> }
 export interface ApiPermissionRole { id: number, name: string, description?: string | null, permissions: Record<string, boolean> }
 export interface ApiTask { id: number, title: string, priority: 'low' | 'medium' | 'high', due_at?: string | null, business?: { client?: { fullname?: string } }, owner?: { name?: string } }
-export interface ApiDocument { id: number, title: string, file: string, type: string, object_id: number | string, file_url?: string | null, url?: string | null, original_name?: string | null, mime_type?: string | null, created_at?: string | null }
+export interface ApiDocument { id: number, title: string, file: string, type: string, object_id: number | string, disk?: string | null, file_url?: string | null, download_url?: string | null, url?: string | null, original_name?: string | null, mime_type?: string | null, created_at?: string | null }
 export interface ApiActivityType { id: number, activity_type: string, funnel_ids: number[], color?: string | null, active?: boolean }
 export interface ApiDocumentType { id: number, name: string, active?: boolean }
 export interface ApiNote { id: number, body: string, business_id: number, created_at: string, user?: { id?: number, name?: string } | null }

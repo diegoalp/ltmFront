@@ -14,6 +14,7 @@ const mapDocument = (document: ApiDocument): CRMDocument => ({
   title: document.title,
   fileName: document.original_name || document.file.split('/').pop() || document.title,
   fileUrl: document.file_url || document.url || `/api/documents/${document.id}/download`,
+  downloadUrl: document.download_url || `/api/documents/${document.id}/download`,
   mimeType: document.mime_type || null,
   createdAt: document.created_at || null
 })

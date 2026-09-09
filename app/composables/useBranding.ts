@@ -45,6 +45,12 @@ const isHexColor = (value: string) => /^#[0-9a-f]{6}$/i.test(value)
 const isLogoUrl = (value: unknown): value is string => typeof value === 'string'
   && (/^https?:\/\//i.test(value) || value.startsWith('/storage/'))
 
+const resolveApiAssetUrl = (value: string | null): string | null => {
+  if (!value || /^https?:\/\//i.test(value)) return value
+  const config = useRuntimeConfig()
+  return `${String(config.public.apiBase).replace(/\/$/, '')}${value.startsWith('/') ? value : `/${value}`}`
+}
+
 /** Prevents incomplete or invalid API data from breaking the theme. */
 const sanitizeBranding = (value: Partial<CRMBrandingSettings>): CRMBrandingSettings => {
   return {
@@ -52,7 +58,7 @@ const sanitizeBranding = (value: Partial<CRMBrandingSettings>): CRMBrandingSetti
       ? value.companyName.trim()
       : defaultBranding.companyName,
     logoDataUrl: isLogoUrl(value.logoDataUrl)
-      ? value.logoDataUrl
+      ? resolveApiAssetUrl(value.logoDataUrl)
       : null,
     primaryColor: typeof value.primaryColor === 'string' && isHexColor(value.primaryColor)
       ? value.primaryColor

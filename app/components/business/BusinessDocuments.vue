@@ -50,7 +50,7 @@
       <p v-else-if="!documents.length" class="py-4 text-center text-xs text-slate-400">Nenhum documento enviado.</p>
       <div v-else class="space-y-2">
         <div v-for="document in documents" :key="document.id" class="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 dark:border-slate-800/60 dark:bg-slate-950">
-          <a :href="document.fileUrl" target="_blank" rel="noopener noreferrer" class="flex min-w-0 flex-1 items-center gap-2" :title="`Abrir ${document.title}`">
+          <a :href="document.downloadUrl" target="_blank" rel="noopener noreferrer" class="flex min-w-0 flex-1 items-center gap-2" :title="`Abrir ${document.title}`">
             <Icon :name="document.mimeType === 'application/pdf' ? 'mdi:file-pdf-box' : 'mdi:file-image-outline'" class="flex-shrink-0 text-slate-400" size="18" />
             <span class="min-w-0">
               <span class="block truncate text-xs font-semibold text-slate-700 dark:text-slate-300">{{ document.title }}</span>
