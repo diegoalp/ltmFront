@@ -199,15 +199,6 @@ export interface CRMCustomField {
   subFields: CRMCustomSubField[]
 }
 
-export interface CRMAutomationRule {
-  id: string
-  name: string
-  trigger: string
-  condition: string
-  action: string
-  active: boolean
-}
-
 export interface CRMPermissionRole {
   id: string
   name: string

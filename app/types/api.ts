@@ -12,7 +12,6 @@ export interface ApiDisposition extends ApiLeadSource { active: boolean }
 export interface ApiTeam { id: number, name: string, description?: string | null }
 export interface ApiAdminUser extends ApiUser { email: string, team_id?: number | null, funnel_id?: number | null, supervisor_id?: number | null }
 export interface ApiCustomField { id: number, label: string, section: string, type: string, required: boolean, default_value?: boolean | null, is_business_value?: boolean, visible_when: string, conditions?: Array<{ field: string, operator: string, value: string[] }>, options?: string[], sub_fields?: Array<{ key: string, label: string, type: string, required: boolean, options?: string[], position: number }> }
-export interface ApiAutomation { id: number, name: string, trigger: string, condition: string, action: string, active: boolean }
 export interface ApiPermissionRole { id: number, name: string, description?: string | null, permissions: Record<string, boolean> }
 export interface ApiTask { id: number, title: string, priority: 'low' | 'medium' | 'high', due_at?: string | null, business?: { client?: { fullname?: string } }, owner?: { name?: string } }
 export interface ApiDocument { id: number, title: string, file: string, type: string, object_id: number | string, file_url?: string | null, url?: string | null, original_name?: string | null, mime_type?: string | null, created_at?: string | null }
