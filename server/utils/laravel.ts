@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 
-const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH'])
+const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 interface ProxyOptions {
   /** Disable for global routes such as authentication and instance management. */
@@ -33,15 +33,15 @@ export const proxyToLaravel = async (event: H3Event, options: ProxyOptions = {})
     : cookieToken
       ? `Bearer ${cookieToken}`
       : null
-  const incomingInstanceId = getHeader(event, 'instance_id')
   const persistedInstanceId = getCookie(event, 'crm-instance-id')
-  const requestedInstanceId = incomingInstanceId || persistedInstanceId
+  const requestedInstanceId = persistedInstanceId
   const instanceId = options.tenantAware === false || !/^\d+$/.test(requestedInstanceId || '')
     ? null
     : requestedInstanceId
   const query = { ...getQuery(event) } as Record<string, string | number | boolean | undefined>
 
-  // Laravel reads the instance from query parameters on GET and from the body on writes.
+  // Laravel reads the instance from query parameters on GET and from the body
+  // on methods that can carry a request payload.
   if (instanceId && method === 'GET') query.instance_id = instanceId
 
   let body: Record<string, unknown> | FormData | undefined
@@ -78,8 +78,7 @@ export const proxyToLaravel = async (event: H3Event, options: ProxyOptions = {})
     headers: {
       'x-api-key': config.apiKey,
       Accept: options.binary ? '*/*' : 'application/json',
-      ...(authorization ? { Authorization: authorization } : {}),
-      ...(instanceId ? { instance_id: instanceId } : {})
+      ...(authorization ? { Authorization: authorization } : {})
     }
   }
   if (options.binary) {

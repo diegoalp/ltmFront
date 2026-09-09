@@ -68,8 +68,7 @@ export const useApi = () => {
         ...options,
         headers: {
           ...options.headers,
-          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
-          ...(instanceId.value ? { instance_id: instanceId.value } : {})
+          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
         }
       })
     } catch (cause: unknown) {
