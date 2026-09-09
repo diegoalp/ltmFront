@@ -81,7 +81,7 @@ import type { KanbanColumn } from '~/types/crm'
 const { user, isAuthenticated } = useAuth()
 const { instanceId } = useApi()
 const { funnels, funnelsLoading: settingsLoading, funnelsError: settingsError } = useFunnels()
-const { funnelColumns, dealsByFunnel, totalByFunnel, cardsByFunnelColumn, moveDealInFunnel } = useKanbanData()
+const { funnelColumns, dealsByFunnel, totalByFunnel, cardsByFunnelColumn, moveDealInFunnel, refreshDeals, dealsLoading } = useKanbanData()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
 
@@ -124,6 +124,14 @@ watch([availableFunnels, settingsLoading], ([value, loading]) => {
 watch(selectedFunnelId, (value) => {
   if (selectionReady.value && canChooseFunnel.value) persistedFunnelId.value = value || null
 }, { flush: 'sync' })
+
+onMounted(() => {
+  if (instanceId.value && !dealsLoading.value) void refreshDeals()
+})
+
+watch(instanceId, (value) => {
+  if (value && !dealsLoading.value) void refreshDeals()
+})
 
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   if (!selectedFunnelId.value) return

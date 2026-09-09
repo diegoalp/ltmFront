@@ -10,7 +10,7 @@
 
       <main class="mx-auto flex w-full max-w-[1500px] p-4 md:p-6">
         <section class="min-w-0 flex-1 space-y-4">
-          <BusinessExpirationAlert />
+          <BusinessExpirationAlert v-if="showBusinessExpirationAlert" />
           <slot />
         </section>
       </main>
@@ -22,4 +22,6 @@ import AppHeader from '~/components/layout/AppHeader.vue'
 import AppSidebar from '~/components/layout/AppSidebar.vue'
 
 const { isOpen } = useSidebar()
+const route = useRoute()
+const showBusinessExpirationAlert = computed(() => route.path === '/' || route.path.startsWith('/negocio/'))
 </script>

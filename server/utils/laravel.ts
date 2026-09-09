@@ -33,8 +33,9 @@ export const proxyToLaravel = async (event: H3Event, options: ProxyOptions = {})
     : cookieToken
       ? `Bearer ${cookieToken}`
       : null
+  const incomingInstanceId = getHeader(event, 'x-crm-instance-id')
   const persistedInstanceId = getCookie(event, 'crm-instance-id')
-  const requestedInstanceId = persistedInstanceId
+  const requestedInstanceId = incomingInstanceId || persistedInstanceId
   const instanceId = options.tenantAware === false || !/^\d+$/.test(requestedInstanceId || '')
     ? null
     : requestedInstanceId

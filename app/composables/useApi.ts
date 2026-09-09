@@ -68,7 +68,8 @@ export const useApi = () => {
         ...options,
         headers: {
           ...options.headers,
-          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
+          ...(instanceId.value ? { 'x-crm-instance-id': instanceId.value } : {})
         }
       })
     } catch (cause: unknown) {

@@ -20,6 +20,8 @@ Security rules:
 - Never move `NUXT_API_KEY` into `runtimeConfig.public`.
 - Never call `ltmApi` directly from components or composables.
 - Let the shared utility obtain tokens and instance IDs from the server session cookies.
+- The browser may pass the selected instance to Nuxt with `x-crm-instance-id`;
+  this is internal context for the proxy and must not be forwarded to Laravel.
 - Do not forward `instance_id` to Laravel in request headers. Tenant-aware writes
   send it in the request body; GET routes keep it in query parameters because
   browser-compatible GET requests do not carry bodies.

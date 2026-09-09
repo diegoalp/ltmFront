@@ -90,9 +90,7 @@ export const useKanbanData = () => {
   watch(instanceId, () => {
     deals.value = []
     loaded.value = false
-    if (instanceId.value) void refreshDeals()
   })
-  if (import.meta.client && !loaded.value && !dealsLoading.value) void refreshDeals()
   return {
     columns, deals, totalPipeline, cardsByColumn, funnelColumns, dealsByFunnel, totalByFunnel,
     cardsByFunnelColumn, moveDeal, moveDealInFunnel, findDealById, refreshDeals, dealsLoading, dealsError

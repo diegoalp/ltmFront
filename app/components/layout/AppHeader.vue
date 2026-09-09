@@ -32,7 +32,7 @@
 
 
       <div class="flex items-center gap-2">
-        <ActivityNotifications />
+        <ActivityNotifications v-if="showActivityNotifications" />
         <InstanceSelect />
         <ThemeSwitch />
 
@@ -58,5 +58,7 @@ import Avatar from './User/Avatar.vue';
 const { logout } = useAuth()
 const { isOpen } = useSidebar()
 const { settings } = useBranding()
+const route = useRoute()
+const showActivityNotifications = computed(() => !route.path.startsWith('/configuracoes'))
 const brandInitials = computed(() => settings.value.companyName.slice(0, 2).toUpperCase())
 </script>

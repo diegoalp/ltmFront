@@ -62,10 +62,15 @@
 
 <script setup lang="ts">
 const { isAuthenticated } = useAuth()
-const { totalPipeline } = useKanbanData()
+const { totalPipeline, refreshDeals, dealsLoading } = useKanbanData()
 const { funnels, tasks } = useCrmSettings()
+const { instanceId } = useApi()
 const totalFormatted = computed(() => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(totalPipeline.value)
+})
+
+onMounted(() => {
+  if (instanceId.value && !dealsLoading.value) void refreshDeals()
 })
 
 if (import.meta.client && !isAuthenticated.value) {
