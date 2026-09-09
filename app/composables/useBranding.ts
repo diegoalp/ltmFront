@@ -43,7 +43,7 @@ const colorPresets = [
 
 const isHexColor = (value: string) => /^#[0-9a-f]{6}$/i.test(value)
 const isLogoUrl = (value: unknown): value is string => typeof value === 'string'
-  && (/^https?:\/\//i.test(value) || value.startsWith('/storage/'))
+  && (/^https?:\/\//i.test(value) || value.startsWith('/storage/') || value.startsWith('/files/'))
 
 const resolveApiAssetUrl = (value: string | null): string | null => {
   if (!value || /^https?:\/\//i.test(value)) return value
