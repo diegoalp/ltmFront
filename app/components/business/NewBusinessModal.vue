@@ -105,6 +105,7 @@ const updateValue = (event: Event) => { if (configuredBusinessValue.value === nu
 
 const activeFunnels = computed(() => funnels.value.filter(item => item.active !== false && item.stages.length))
 const isAdministrator = computed(() => ['admin', 'master', 'mastr'].includes(String(user.value?.role || '').toLowerCase()))
+const isAdministrativeRole = (role: string) => ['admin', 'master', 'mastr'].includes(role.toLowerCase())
 const supervisedSellers = computed(() => users.value.filter(item =>
   item.role.toLowerCase() === 'seller' && String(item.supervisorId) === String(user.value?.id)
 ))
@@ -118,7 +119,7 @@ const assignableUsers = computed(() => {
     teamId: null, funnelId: user.value.funnelId ?? null, supervisorId: null
   }
   return [currentUser, ...allowed.filter(item => String(item.id) !== String(currentUser.id))]
-    .filter(item => item.funnelId != null && String(item.funnelId) === form.funnelId)
+    .filter(item => isAdministrativeRole(item.role) || (item.funnelId != null && String(item.funnelId) === form.funnelId))
 })
 const canAssignOwner = computed(() => isAdministrator.value || supervisedSellers.value.length > 0)
 const availableCategories = computed(() => categories.value.filter(item => item.active && item.funnelIds.includes(form.funnelId)))
