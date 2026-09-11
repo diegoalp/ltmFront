@@ -108,105 +108,111 @@
               
               <div class="space-y-4">
                 <div v-if="hasClientValue(deal.document) || hasClientValue(deal.profession)" class="grid grid-cols-1 gap-4">
-                  <div v-if="hasClientValue(deal.document)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">CPF</label>
-                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar CPF" @click="copyClientValue('CPF', deal.document)">{{ deal.document }}</button>
+                  <div v-if="hasClientValue(deal.document)" class="field-pair">
+                    <span class="field-name">CPF</span>
+                    <button type="button" class="copy-value field-value" title="Copiar CPF" @click="copyClientValue('CPF', deal.document)">{{ deal.document }}</button>
                   </div>
-                  <div v-if="hasClientValue(deal.profession)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Profissão</label>
-                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar profissão" @click="copyClientValue('Profissão', deal.profession)">{{ deal.profession }}</button>
+                  <div v-if="hasClientValue(deal.profession)" class="field-pair">
+                    <span class="field-name">Profissão</span>
+                    <button type="button" class="copy-value field-value" title="Copiar profissão" @click="copyClientValue('Profissão', deal.profession)">{{ deal.profession }}</button>
                   </div>
                 </div>
 
                 <div v-if="hasClientValue(deal.birthDate) || hasClientValue(deal.gender)" class="grid grid-cols-1 gap-4">
-                  <div v-if="hasClientValue(deal.birthDate)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Nascimento (Idade)</label>
-                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar nascimento" @click="copyClientValue('Nascimento', formatDate(deal.birthDate))">
+                  <div v-if="hasClientValue(deal.birthDate)" class="field-pair">
+                    <span class="field-name">Nascimento (Idade)</span>
+                    <button type="button" class="copy-value field-value" title="Copiar nascimento" @click="copyClientValue('Nascimento', formatDate(deal.birthDate))">
                       {{ formatDate(deal.birthDate) }} 
                       <span class="text-xs text-slate-500 font-normal">({{ customerAge }} anos)</span>
                     </button>
                   </div>
-                  <div v-if="hasClientValue(deal.gender)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Sexo</label>
-                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar sexo" @click="copyClientValue('Sexo', deal.gender)">{{ deal.gender }}</button>
+                  <div v-if="hasClientValue(deal.gender)" class="field-pair">
+                    <span class="field-name">Sexo</span>
+                    <button type="button" class="copy-value field-value" title="Copiar sexo" @click="copyClientValue('Sexo', deal.gender)">{{ deal.gender }}</button>
                   </div>
                 </div>
 
                 <div v-if="[deal.address, deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
-                  <div v-if="hasClientValue(deal.address)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Endereço</label>
-                    <button type="button" class="copy-value text-sm font-medium leading-tight text-slate-700 dark:text-slate-300" title="Copiar endereço" @click="copyClientValue('Endereço', deal.address)">
+                  <div v-if="hasClientValue(deal.address)" class="field-pair">
+                    <span class="field-name">Endereço</span>
+                    <button type="button" class="copy-value field-value font-medium leading-tight text-slate-700 dark:text-slate-300" title="Copiar endereço" @click="copyClientValue('Endereço', deal.address)">
                       {{ deal.address }}
                     </button>
                   </div>
                   
                   <div v-if="[deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="grid grid-cols-3 gap-2 text-xs">
-                    <div v-if="hasClientValue(deal.city)">
-                      <span class="text-slate-400 block">Cidade</span>
-                      <button type="button" class="copy-value block truncate text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar cidade" @click="copyClientValue('Cidade', deal.city)">{{ deal.city }}</button>
+                    <div v-if="hasClientValue(deal.city)" class="field-pair">
+                      <span class="field-name">Cidade</span>
+                      <button type="button" class="copy-value field-value truncate text-xs text-slate-800 dark:text-slate-200" title="Copiar cidade" @click="copyClientValue('Cidade', deal.city)">{{ deal.city }}</button>
                     </div>
-                    <div v-if="hasClientValue(deal.state)">
-                      <span class="text-slate-400 block">Estado</span>
-                      <button type="button" class="copy-value block text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar estado" @click="copyClientValue('Estado', deal.state)">{{ deal.state }}</button>
+                    <div v-if="hasClientValue(deal.state)" class="field-pair">
+                      <span class="field-name">Estado</span>
+                      <button type="button" class="copy-value field-value text-xs text-slate-800 dark:text-slate-200" title="Copiar estado" @click="copyClientValue('Estado', deal.state)">{{ deal.state }}</button>
                     </div>
-                    <div v-if="hasClientValue(deal.zipCode)">
-                      <span class="text-slate-400 block">CEP</span>
-                      <button type="button" class="copy-value block truncate text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar CEP" @click="copyClientValue('CEP', deal.zipCode)">{{ deal.zipCode }}</button>
+                    <div v-if="hasClientValue(deal.zipCode)" class="field-pair">
+                      <span class="field-name">CEP</span>
+                      <button type="button" class="copy-value field-value truncate text-xs text-slate-800 dark:text-slate-200" title="Copiar CEP" @click="copyClientValue('CEP', deal.zipCode)">{{ deal.zipCode }}</button>
                     </div>
                   </div>
                 </div>
 
                 <div class="pt-3 border-t border-slate-100 dark:border-slate-800/60 grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="text-xs text-slate-400 dark:text-slate-500">Valor Negócio</label>
+                  <div class="field-pair">
+                    <span class="field-name">Valor Negócio</span>
                     <button type="button" class="copy-value text-base font-bold" title="Copiar valor do negócio" @click="copyClientValue('Valor do negócio', formatCurrency(deal.value))">{{ formatCurrency(deal.value) }}</button>
                   </div>
-                  <div v-if="hasClientValue(deal.bank)">
-                    <label class="text-xs text-slate-400 dark:text-slate-500">Banco Origem</label>
-                    <button type="button" class="copy-value truncate text-sm font-semibold" title="Copiar banco origem" @click="copyClientValue('Banco origem', deal.bank)">{{ deal.bank }}</button>
+                  <div v-if="hasClientValue(deal.bank)" class="field-pair">
+                    <span class="field-name">Banco Origem</span>
+                    <button type="button" class="copy-value field-value truncate" title="Copiar banco origem" @click="copyClientValue('Banco origem', deal.bank)">{{ deal.bank }}</button>
                   </div>
                 </div>
 
-                <div v-if="clientDetailFields.length" class="space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800/60">
-                  <div v-for="field in clientDetailFields" :key="field.id">
-                    <label class="text-xs font-medium text-slate-400 dark:text-slate-500">{{ field.label }}</label>
-                    <button type="button" class="copy-value break-words text-sm font-semibold" :title="`Copiar ${field.label}`" @click="copyClientValue(field.label, displayFieldValue(field, deal.clientCustomFields[field.id]))">{{ displayFieldValue(field, deal.clientCustomFields[field.id]) }}</button>
-                  </div>
+              </div>
+            </div>
+
+            <div v-for="section in clientDetailSections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
+              <div class="grid gap-4">
+                <div v-for="field in section.fields" :key="field.id" class="field-pair">
+                  <span class="field-name">{{ field.label }}</span>
+                  <button type="button" class="copy-value field-value" :title="`Copiar ${field.label}`" @click="copyClientValue(field.label, displayFieldValue(field, field.value))">{{ displayFieldValue(field, field.value) }}</button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="lg:col-span-2 xl:col-span-2 space-y-6">
-            <div v-if="businessDetailFields.length" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dados do negócio</h3>
+            <div v-for="section in businessDisplaySections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
               </div>
-              <div class="grid gap-4 sm:grid-cols-2">
-                <div v-for="field in businessDetailFields" :key="field.id" class="rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
-                  <p class="text-[10px] font-medium uppercase text-slate-400">{{ field.label }}</p>
-                  <button type="button" class="copy-value mt-1 break-words text-sm font-bold" :title="`Copiar ${field.label}`" @click="copyValue(field.label, displaySubFieldValue(field.type, field.value))">{{ displaySubFieldValue(field.type, field.value) }}</button>
+              <div v-if="section.fields.length" class="grid gap-4 sm:grid-cols-2">
+                <div v-for="field in section.fields" :key="field.id" class="field-pair rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
+                  <span class="field-name">{{ field.label }}</span>
+                  <button type="button" class="copy-value field-value" :title="`Copiar ${field.label}`" @click="copyValue(field.label, displaySubFieldValue(field.type, field.value))">{{ displaySubFieldValue(field.type, field.value) }}</button>
                 </div>
               </div>
-            </div>
 
-            <div v-for="field in repeatableBusinessFields" :key="field.id" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ field.label }}</h3>
-                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ groupFieldRows(field).length }} {{ groupFieldRows(field).length === 1 ? 'item' : 'itens' }}</span>
-              </div>
+              <div v-if="section.repeatableFields.length" class="space-y-5" :class="{ 'mt-5 border-t border-slate-100 pt-5 dark:border-slate-800/60': section.fields.length }">
+                <section v-for="field in section.repeatableFields" :key="field.id" class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{{ field.label }}</h4>
+                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ groupFieldRows(field).length }} {{ groupFieldRows(field).length === 1 ? 'item' : 'itens' }}</span>
+                  </div>
 
-              <div v-if="groupFieldRows(field).length" class="grid gap-3">
-                <div v-for="(row, rowIndex) in groupFieldRows(field)" :key="rowIndex" class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                  <div class="grid gap-3 sm:grid-cols-2">
-                    <div v-for="subField in field.subFields.filter(sub => hasCustomFieldValue(row[sub.key]))" :key="subField.key">
-                      <p class="text-[10px] font-medium uppercase text-slate-400">{{ subField.label }}</p>
-                      <button type="button" class="copy-value mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-200" :title="`Copiar ${subField.label}`" @click="copyValue(subField.label, displaySubFieldValue(subField.type, row[subField.key]))">{{ displaySubFieldValue(subField.type, row[subField.key]) }}</button>
+                  <div v-if="groupFieldRows(field).length" class="grid gap-3">
+                    <div v-for="(row, rowIndex) in groupFieldRows(field)" :key="rowIndex" class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                      <div class="grid gap-3 sm:grid-cols-2">
+                        <div v-for="subField in field.subFields.filter(sub => hasCustomFieldValue(row[sub.key]))" :key="subField.key" class="field-pair">
+                          <span class="field-name">{{ subField.label }}</span>
+                          <button type="button" class="copy-value field-value text-slate-800 dark:text-slate-200" :title="`Copiar ${subField.label}`" @click="copyValue(subField.label, displaySubFieldValue(subField.type, row[subField.key]))">{{ displaySubFieldValue(subField.type, row[subField.key]) }}</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <p v-else class="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-500 dark:border-slate-800">Nenhum item informado.</p>
+                </section>
               </div>
-              <p v-else class="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-500 dark:border-slate-800">Nenhum item informado.</p>
             </div>
 
             <BusinessNotes :business-id="deal.id" />
@@ -244,9 +250,12 @@
               
               <div class="space-y-2">
                 <div v-for="(phone, index) in [ { number: deal.phone, isValidated: true, isWhatsapp: true } ]" :key="index" class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 px-3 py-2 rounded-xl text-sm">
-                  <div class="flex items-center gap-2">
+                  <div class="field-pair min-w-0">
+                    <span class="field-name">Telefone</span>
+                    <div class="flex min-w-0 items-center gap-2">
                     <span :class="phone.isValidated ? 'bg-emerald-500' : 'bg-amber-500'" class="h-2 w-2 rounded-full inline-block"></span>
-                    <button type="button" class="copy-value text-sm font-medium text-slate-700 dark:text-slate-300" title="Copiar telefone" @click="copyValue('Telefone', phone.number)">{{ phone.number }}</button>
+                      <button type="button" class="copy-value field-value truncate text-slate-700 dark:text-slate-300" title="Copiar telefone" @click="copyValue('Telefone', phone.number)">{{ phone.number }}</button>
+                    </div>
                   </div>
                   
                   <a v-if="phone.isWhatsapp" :href="`https://wa.me/${phone.number.replace(/\D/g, '')}`" target="_blank" class="text-emerald-600 hover:text-emerald-500 dark:text-emerald-500 transition" title="Chamar no WhatsApp">
@@ -329,9 +338,9 @@ import BusinessActivities from '~/components/business/BusinessActivities.vue'
 import BusinessNotes from '~/components/business/BusinessNotes.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useKanbanData } from '~/composables/useKanbanData'
-import type { CRMCustomField, CRMCustomFieldType, CRMCustomSubFieldType, DealCard, DealStage } from '~/types/crm'
+import type { CRMCustomField, DealStage } from '~/types/crm'
 import { formatCurrency, formatDate } from '~/utils/formatters'
-import { hasCustomFieldValue, formatCustomFieldValue, savedCustomFieldEntries } from '~/utils/customFieldDisplay'
+import { hasCustomFieldValue, formatCustomFieldValue } from '~/utils/customFieldDisplay'
 
 const { isDealDisabled } = useBusinessExpiration()
 const route = useRoute()
@@ -342,6 +351,7 @@ const { columns, findDealById, moveDeal, assignDealOwner, refreshDeals, dealsLoa
 const { categoryById } = useCategories()
 const { productById } = useProducts()
 const { customFields } = useCustomFields()
+const { customFieldSections } = useCrmSettings()
 const { users, loadUsers } = useUsers()
 
 const dealId = computed(() => {
@@ -366,23 +376,98 @@ const availableOwners = computed(() => {
   return users.value.filter(item => ['admin', 'master'].includes(item.role) || String(item.funnelId) === deal.value?.funnelId)
 })
 
-const fieldConditionMatches = (field: CRMCustomField) => field.conditions.every(condition => {
-  if (!deal.value) return false
-  const selected = condition.field === 'funnel_id'
-    ? String(deal.value.funnelId || '')
-    : condition.field === 'category_id'
-      ? String(deal.value.categoryId)
-      : String(deal.value.productId || '')
-  const included = condition.value.includes(selected)
-  return condition.operator === 'equals' ? included : !included
-})
-const applicableFields = computed(() => customFields.value.filter(field => fieldConditionMatches(field)))
 const hasClientValue = hasCustomFieldValue
+type DetailField = Pick<CRMCustomField, 'id' | 'label' | 'section' | 'type' | 'customFieldSectionId' | 'formSection' | 'formSectionOrder' | 'position'> & { value: unknown }
+
+const detailFieldsFromValues = (values: Record<string, unknown>, fallbackSection: CRMCustomField['section']) => {
+  const byId = new Map(customFields.value.map(field => [String(field.id), field]))
+  return Object.entries(values)
+    .filter(([, value]) => hasCustomFieldValue(value))
+    .map(([id, value]) => {
+      const definition = byId.get(String(id))
+      return {
+        id,
+        label: definition?.label || `Campo #${id}`,
+        section: definition?.section || fallbackSection,
+        type: definition?.type || 'text',
+        customFieldSectionId: definition?.customFieldSectionId || null,
+        formSection: definition?.formSection || null,
+        formSectionOrder: definition?.formSectionOrder ?? 0,
+        position: definition?.position ?? 0,
+        value
+      } as DetailField
+    })
+}
+const defaultDetailSection = (section: CRMCustomField['section']) => section === 'client' ? 'Dados complementares do cliente' : section === 'product' ? 'Dados complementares do produto' : 'Dados complementares do negócio'
+const groupDetailFields = (fields: DetailField[]) => {
+  const sections = new Map<string, { title: string, order: number, fields: DetailField[] }>()
+  fields.forEach(field => {
+    const configuredSection = customFieldSections.value.find(section => section.id === field.customFieldSectionId)
+    const title = configuredSection?.name || field.formSection || defaultDetailSection(field.section)
+    const order = configuredSection?.position ?? field.formSectionOrder
+    const section = sections.get(title) || { title, order, fields: [] }
+    section.order = Math.min(section.order, order)
+    section.fields.push(field)
+    sections.set(title, section)
+  })
+  return [...sections.values()]
+    .map(section => ({
+      ...section,
+      fields: [...section.fields].sort((a, b) => a.position - b.position || a.label.localeCompare(b.label))
+    }))
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+}
+const groupCustomFields = (fields: CRMCustomField[]) => {
+  const sections = new Map<string, { title: string, order: number, fields: CRMCustomField[] }>()
+  fields.forEach(field => {
+    const configuredSection = customFieldSections.value.find(section => section.id === field.customFieldSectionId)
+    const title = configuredSection?.name || field.formSection || defaultDetailSection(field.section)
+    const order = configuredSection?.position ?? field.formSectionOrder
+    const section = sections.get(title) || { title, order, fields: [] }
+    section.order = Math.min(section.order, order)
+    section.fields.push(field)
+    sections.set(title, section)
+  })
+  return [...sections.values()]
+    .map(section => ({
+      ...section,
+      fields: [...section.fields].sort((a, b) => a.position - b.position || a.label.localeCompare(b.label))
+    }))
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+}
 // Saved values drive the detail view; creation conditions must not hide existing data.
-const clientDetailFields = computed(() => savedCustomFieldEntries(deal.value?.clientCustomFields || {}, customFields.value).filter(field => field.type !== 'group'))
+const clientDetailSections = computed(() => groupDetailFields(detailFieldsFromValues(deal.value?.clientCustomFields || {}, 'client').filter(field => field.section === 'client' && field.type !== 'group')))
 // Saved values drive the detail view; creation conditions must not hide existing data.
-const businessDetailFields = computed(() => savedCustomFieldEntries(deal.value?.customFields || {}, customFields.value).filter(field => field.type !== 'group'))
+const businessDetailSections = computed(() => groupDetailFields(detailFieldsFromValues(deal.value?.customFields || {}, 'business').filter(field => ['business', 'product'].includes(field.section) && field.type !== 'group')))
 const repeatableBusinessFields = computed(() => customFields.value.filter(field => field.type === 'group' && groupFieldRows(field).length > 0))
+const repeatableBusinessSections = computed(() => groupCustomFields(repeatableBusinessFields.value))
+const businessDisplaySections = computed(() => {
+  const sections = new Map<string, { title: string, order: number, fields: DetailField[], repeatableFields: CRMCustomField[] }>()
+
+  businessDetailSections.value.forEach(section => {
+    sections.set(section.title, {
+      title: section.title,
+      order: section.order,
+      fields: section.fields,
+      repeatableFields: []
+    })
+  })
+
+  repeatableBusinessSections.value.forEach(section => {
+    const current = sections.get(section.title) || {
+      title: section.title,
+      order: section.order,
+      fields: [],
+      repeatableFields: []
+    }
+
+    current.order = Math.min(current.order, section.order)
+    current.repeatableFields = section.fields
+    sections.set(section.title, current)
+  })
+
+  return [...sections.values()].sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+})
 
 const displaySubFieldValue = formatCustomFieldValue
 const displayFieldValue = (field: { type: string }, value: unknown) => displaySubFieldValue(field.type, value)
@@ -448,10 +533,6 @@ onMounted(async () => {
 watch(deal, currentDeal => {
   selectedOwnerId.value = currentDeal?.ownerId ?? null
 }, { immediate: true })
-
-const stageLabel = computed(() => {
-  return columns.value.find((column) => String(column.id) === deal.value?.funnelStageId)?.title ?? 'Desconhecido'
-})
 
 const isDealLost = computed(() => (deal.value?.status ?? 'active') === 'lost')
 const isDealWon = computed(() => (deal.value?.status ?? 'active') === 'won')
@@ -526,6 +607,15 @@ const customerAge = computed(() => {
 <style scoped>
 .copy-value {
   @apply inline-block max-w-full cursor-copy rounded-md text-left text-slate-900 outline-none transition hover:text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:text-slate-100 dark:hover:text-indigo-300;
+}
+.field-pair {
+  @apply min-w-0 space-y-1;
+}
+.field-name {
+  @apply block text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500;
+}
+.field-value {
+  @apply block break-words text-sm font-semibold;
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

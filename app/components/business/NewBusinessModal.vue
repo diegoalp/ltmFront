@@ -259,13 +259,9 @@ const submit = async () => {
   try {
     const client = await request<{ data: { id: number } }>('/clients/resolve', { method: 'POST', body: {
       fullname: form.fullname.trim(), type: form.clientType, registration: onlyDigits(form.registration),
-      phones: form.phone.trim() ? [{ number: onlyDigits(form.phone), whatsapp: false }] : []
+      phones: form.phone.trim() ? [{ number: onlyDigits(form.phone), whatsapp: false }] : [],
+      extra: { custom_fields: serializeCustomFields(clientFields.value) }
     } })
-    if (clientFields.value.length) {
-      await request(`/clients/${client.data.id}`, { method: 'PATCH', body: {
-        extra: { custom_fields: serializeCustomFields(clientFields.value) }
-      } })
-    }
     await request('/businesses', { method: 'POST', body: {
       client_id: client.data.id, user_id: Number(form.userId), category_id: Number(form.categoryId),
       product_id: form.productId ? Number(form.productId) : null, funnel_id: Number(form.funnelId), stage_id: Number(selectedStageId.value),
