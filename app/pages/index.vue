@@ -129,10 +129,6 @@ onMounted(() => {
   if (instanceId.value && !dealsLoading.value) void refreshDeals()
 })
 
-watch(instanceId, (value) => {
-  if (value && !dealsLoading.value) void refreshDeals()
-})
-
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   if (!selectedFunnelId.value) return
   moveDealInFunnel(cardId, selectedFunnelId.value, String(stage))

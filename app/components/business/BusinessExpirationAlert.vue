@@ -9,19 +9,12 @@
 </template>
 <script setup lang="ts">
 const { expiredOwnDeals, hasExpiredDeals, now } = useBusinessExpiration()
-const { refreshDeals } = useKanbanData()
 let timer: ReturnType<typeof setInterval> | undefined
-let poll: ReturnType<typeof setInterval> | undefined
-const refresh = () => { now.value = Date.now(); void refreshDeals() }
 onMounted(() => {
   now.value = Date.now()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
-  poll = setInterval(refresh, 60000)
-  window.addEventListener('focus', refresh)
 })
 onUnmounted(() => {
   clearInterval(timer)
-  clearInterval(poll)
-  window.removeEventListener('focus', refresh)
 })
 </script>

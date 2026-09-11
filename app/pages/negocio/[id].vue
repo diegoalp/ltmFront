@@ -38,7 +38,23 @@
                   <span class="text-xs rounded-md px-2.5 py-1" :style="productStyle">{{ productName }}</span>
               </div>
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Responsável: {{ deal.ownerName }} • Criado em {{ formatDate(deal.createdAt) }}</p>
+            <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+              <label class="flex items-center gap-2">
+                <span>Responsável</span>
+                <select
+                  v-model.number="selectedOwnerId"
+                  :disabled="assigningOwner || !availableOwners.length"
+                  class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                  @change="assignOwner"
+                >
+                  <option v-if="!availableOwners.length" :value="deal.ownerId">{{ deal.ownerName }}</option>
+                  <option v-for="owner in availableOwners" :key="owner.id" :value="owner.id">
+                    {{ owner.name }}{{ owner.role === 'admin' || owner.role === 'master' ? ' - Admin' : '' }}
+                  </option>
+                </select>
+              </label>
+              <span>Criado em {{ formatDate(deal.createdAt) }}</span>
+            </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -48,6 +64,14 @@
             <span v-if="isDealWon" class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
               Negócio ganho
             </span>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              @click="showEditModal = true"
+            >
+              <Icon name="mdi:pencil-outline" size="16" />
+              Editar
+            </button>
             <button
               v-if="isCurrentStageFinal && !isDealLost && !isDealWon"
               type="button"
@@ -86,48 +110,48 @@
                 <div v-if="hasClientValue(deal.document) || hasClientValue(deal.profession)" class="grid grid-cols-1 gap-4">
                   <div v-if="hasClientValue(deal.document)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">CPF</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.document }}</p>
+                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar CPF" @click="copyClientValue('CPF', deal.document)">{{ deal.document }}</button>
                   </div>
                   <div v-if="hasClientValue(deal.profession)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Profissão</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.profession }}</p>
+                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar profissão" @click="copyClientValue('Profissão', deal.profession)">{{ deal.profession }}</button>
                   </div>
                 </div>
 
                 <div v-if="hasClientValue(deal.birthDate) || hasClientValue(deal.gender)" class="grid grid-cols-1 gap-4">
                   <div v-if="hasClientValue(deal.birthDate)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Nascimento (Idade)</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {{ formatDateResume(deal.birthDate) }} 
+                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar nascimento" @click="copyClientValue('Nascimento', formatDate(deal.birthDate))">
+                      {{ formatDate(deal.birthDate) }} 
                       <span class="text-xs text-slate-500 font-normal">({{ customerAge }} anos)</span>
-                    </p>
+                    </button>
                   </div>
                   <div v-if="hasClientValue(deal.gender)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Sexo</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ deal.gender }}</p>
+                    <button type="button" class="copy-value text-sm font-semibold" title="Copiar sexo" @click="copyClientValue('Sexo', deal.gender)">{{ deal.gender }}</button>
                   </div>
                 </div>
 
                 <div v-if="[deal.address, deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
                   <div v-if="hasClientValue(deal.address)">
                     <label class="text-xs text-slate-400 dark:text-slate-500 font-medium">Endereço</label>
-                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight">
+                    <button type="button" class="copy-value text-sm font-medium leading-tight text-slate-700 dark:text-slate-300" title="Copiar endereço" @click="copyClientValue('Endereço', deal.address)">
                       {{ deal.address }}
-                    </p>
+                    </button>
                   </div>
                   
                   <div v-if="[deal.city, deal.state, deal.zipCode].some(hasClientValue)" class="grid grid-cols-3 gap-2 text-xs">
                     <div v-if="hasClientValue(deal.city)">
                       <span class="text-slate-400 block">Cidade</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ deal.city }}</span>
+                      <button type="button" class="copy-value block truncate text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar cidade" @click="copyClientValue('Cidade', deal.city)">{{ deal.city }}</button>
                     </div>
                     <div v-if="hasClientValue(deal.state)">
                       <span class="text-slate-400 block">Estado</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 block">{{ deal.state }}</span>
+                      <button type="button" class="copy-value block text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar estado" @click="copyClientValue('Estado', deal.state)">{{ deal.state }}</button>
                     </div>
                     <div v-if="hasClientValue(deal.zipCode)">
                       <span class="text-slate-400 block">CEP</span>
-                      <span class="font-semibold text-slate-800 dark:text-slate-200 block truncate">{{ deal.zipCode }}</span>
+                      <button type="button" class="copy-value block truncate text-xs font-semibold text-slate-800 dark:text-slate-200" title="Copiar CEP" @click="copyClientValue('CEP', deal.zipCode)">{{ deal.zipCode }}</button>
                     </div>
                   </div>
                 </div>
@@ -135,18 +159,18 @@
                 <div class="pt-3 border-t border-slate-100 dark:border-slate-800/60 grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-xs text-slate-400 dark:text-slate-500">Valor Negócio</label>
-                    <p class="text-base font-bold text-slate-900 dark:text-slate-100">{{ formatCurrency(deal.value) }}</p>
+                    <button type="button" class="copy-value text-base font-bold" title="Copiar valor do negócio" @click="copyClientValue('Valor do negócio', formatCurrency(deal.value))">{{ formatCurrency(deal.value) }}</button>
                   </div>
                   <div v-if="hasClientValue(deal.bank)">
                     <label class="text-xs text-slate-400 dark:text-slate-500">Banco Origem</label>
-                    <p class="text-sm font-semibold truncate text-slate-900 dark:text-slate-100">{{ deal.bank }}</p>
+                    <button type="button" class="copy-value truncate text-sm font-semibold" title="Copiar banco origem" @click="copyClientValue('Banco origem', deal.bank)">{{ deal.bank }}</button>
                   </div>
                 </div>
 
                 <div v-if="clientDetailFields.length" class="space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800/60">
                   <div v-for="field in clientDetailFields" :key="field.id">
                     <label class="text-xs font-medium text-slate-400 dark:text-slate-500">{{ field.label }}</label>
-                    <p class="break-words text-sm font-semibold text-slate-900 dark:text-slate-100">{{ displayFieldValue(field, deal.clientCustomFields[field.id]) }}</p>
+                    <button type="button" class="copy-value break-words text-sm font-semibold" :title="`Copiar ${field.label}`" @click="copyClientValue(field.label, displayFieldValue(field, deal.clientCustomFields[field.id]))">{{ displayFieldValue(field, deal.clientCustomFields[field.id]) }}</button>
                   </div>
                 </div>
               </div>
@@ -252,6 +276,13 @@
     </template>
     </ClientOnly>
 
+    <BusinessEditBusinessModal
+      :open="showEditModal"
+      :deal="deal || null"
+      @close="showEditModal = false"
+      @saved="showEditModal = false"
+    />
+
     <div v-if="showLossModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
       <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <div class="flex items-start justify-between gap-3">
@@ -303,10 +334,11 @@ const route = useRoute()
 const { user, isAuthenticated } = useAuth()
 const { request } = useApi()
 const toast = useToast()
-const { columns, findDealById, moveDeal, refreshDeals, dealsLoading } = useKanbanData()
+const { columns, findDealById, moveDeal, assignDealOwner, refreshDeals, dealsLoading } = useKanbanData()
 const { categoryById } = useCategories()
 const { productById } = useProducts()
 const { customFields } = useCustomFields()
+const { users, loadUsers } = useUsers()
 
 const dealId = computed(() => {
   const rawId = route.params.id
@@ -322,6 +354,13 @@ const productStyle = computed(() => ({
   backgroundColor: product.value?.color ?? '#E2E8F0',
   color: product.value?.color ? productTextColor(product.value.color) : '#334155'
 }))
+const selectedOwnerId = ref<number | null>(null)
+const assigningOwner = ref(false)
+const availableOwners = computed(() => {
+  if (!deal.value) return []
+
+  return users.value.filter(item => ['admin', 'master'].includes(item.role) || String(item.funnelId) === deal.value?.funnelId)
+})
 
 const fieldConditionMatches = (field: CRMCustomField) => field.conditions.every(condition => {
   if (!deal.value) return false
@@ -347,6 +386,33 @@ const groupFieldRows = (field: CRMCustomField) => {
   return Array.isArray(rows) ? rows.filter(row => row && typeof row === 'object' && field.subFields.some(subField => hasCustomFieldValue(row[subField.key]))) as Array<Record<string, unknown>> : []
 }
 
+const copyClientValue = async (label: string, value: unknown) => {
+  if (!import.meta.client) return
+
+  const text = String(value ?? '').trim()
+  if (!text) return
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.setAttribute('readonly', '')
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+
+    toast.success(`${label} copiado.`)
+  } catch {
+    toast.error('Não foi possível copiar o conteúdo.')
+  }
+}
+
 const productTextColor = (hex: string) => {
   const normalized = hex.replace('#', '')
   const red = Number.parseInt(normalized.slice(0, 2), 16)
@@ -356,6 +422,7 @@ const productTextColor = (hex: string) => {
 }
 const lossReasons = ['Preço acima do esperado', 'Cliente desistiu', 'Não houve retorno', 'Produto não atende', 'Concorrência venceu', 'Outros']
 const showLossModal = ref(false)
+const showEditModal = ref(false)
 const selectedLossReason = ref('')
 
 if (import.meta.client && !isAuthenticated.value) {
@@ -366,10 +433,15 @@ const initialLoading = ref(true)
 onMounted(async () => {
   try {
     if (!deal.value) await refreshDeals()
+    if (!users.value.length) await loadUsers()
   } finally {
     initialLoading.value = false
   }
 })
+
+watch(deal, currentDeal => {
+  selectedOwnerId.value = currentDeal?.ownerId ?? null
+}, { immediate: true })
 
 const stageLabel = computed(() => {
   return columns.value.find((column) => String(column.id) === deal.value?.funnelStageId)?.title ?? 'Desconhecido'
@@ -389,6 +461,22 @@ const changeStage = async (stage: DealStage | string) => {
 
   await moveDeal(deal.value.id, stage)
   await refreshDeals()
+}
+
+const assignOwner = async () => {
+  if (!deal.value || !selectedOwnerId.value || selectedOwnerId.value === deal.value.ownerId) return
+
+  const previousOwnerId = deal.value.ownerId
+  assigningOwner.value = true
+  try {
+    await assignDealOwner(deal.value.id, selectedOwnerId.value)
+    toast.success('Responsável atualizado.')
+  } catch {
+    selectedOwnerId.value = previousOwnerId
+    toast.error('Não foi possível atribuir este negócio.')
+  } finally {
+    assigningOwner.value = false
+  }
 }
 
 const openLossModal = () => {
@@ -430,6 +518,9 @@ const customerAge = computed(() => {
 </script>
 
 <style scoped>
+.copy-value {
+  @apply block max-w-full cursor-copy rounded-md text-left text-slate-900 outline-none transition hover:text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:text-slate-100 dark:hover:text-indigo-300;
+}
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

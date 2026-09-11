@@ -82,7 +82,9 @@ export interface KanbanColumn {
 
 export interface DealCard {
   id: number
+  clientId: number
   title: string
+  clientType: 'individual' | 'company'
   phone: string
   document: string
   birthDate: string
@@ -95,6 +97,8 @@ export interface DealCard {
   funnelId?: string
   funnelStageId?: string
   value: number
+  notes?: string | null
+  leadSourceId?: number | null
   priority: 'low' | 'medium' | 'high'
   dueDate: string
   expirationDate?: string | null

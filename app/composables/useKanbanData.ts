@@ -1,10 +1,11 @@
 import type { DealCard, DealStage, KanbanColumn } from '~/types/crm'
-import type { ApiBusiness } from '~/types/api'
+import type { ApiBusiness, ApiResourceResponse } from '~/types/api'
 
 import { extractCustomFields } from '~/utils/customFieldDisplay'
 
 const mapBusiness = (item: ApiBusiness): DealCard => ({
-  id: item.id, title: item.client?.fullname || `Cliente #${item.client_id}`, phone: item.client?.phones?.[0]?.number || '',
+  id: item.id, clientId: item.client_id, title: item.client?.fullname || `Cliente #${item.client_id}`,
+  clientType: item.client?.type || 'individual', phone: item.client?.phones?.[0]?.number || '',
   document: item.client?.registration || '', birthDate: item.client?.birthdate || '', categoryId: item.category_id,
   gender: item.client?.gender || '', address: [item.client?.street, item.client?.district].filter(Boolean).join(', '),
   city: item.client?.city || '', state: item.client?.state || '', zipCode: item.client?.zipcode || '',
@@ -13,6 +14,7 @@ const mapBusiness = (item: ApiBusiness): DealCard => ({
   ownerName: [item.user?.name, item.user?.lastname].filter(Boolean).join(' ') || 'Sem responsável',
   stage: Math.min(Math.max(item.stage?.position || 1, 1), 6) as DealStage,
   funnelId: String(item.funnel_id), funnelStageId: String(item.stage_id), value: Number(item.value),
+  notes: item.notes || null, leadSourceId: item.lead_source_id ?? null,
   expirationDate: item.expiration_date || null,
   priority: item.priority || 'medium', dueDate: item.dueDate || '', createdAt: item.created_at,
   timeline: item.timeline || [], conversation: item.conversation || [],
@@ -85,6 +87,26 @@ export const useKanbanData = () => {
     const target = columns.value.find((_, index) => index + 1 === Number(stage)) || columns.value.find(column => String(column.id) === String(stage))
     if (target && firstFunnel.value) await moveDealInFunnel(dealId, firstFunnel.value.id, String(target.id))
   }
+  const assignDealOwner = async (dealId: number, userId: number) => {
+    const deal = deals.value.find(item => item.id === dealId)
+    if (!deal || isDealDisabled(deal)) return
+
+    const previous = { ownerId: deal.ownerId, ownerName: deal.ownerName }
+    deal.ownerId = userId
+
+    try {
+      const response = await request<ApiBusiness | ApiResourceResponse<ApiBusiness>>(`/businesses/${dealId}`, {
+        method: 'PATCH',
+        body: { user_id: userId }
+      })
+      const item = mapBusiness('data' in response ? response.data : response)
+      deals.value = deals.value.map(card => card.id === dealId ? item : card)
+    } catch (cause) {
+      Object.assign(deal, previous)
+      dealsError.value = cause instanceof Error ? cause.message : 'Erro ao atribuir negócio.'
+      throw cause
+    }
+  }
   const findDealById = (id: number) => deals.value.find(item => item.id === id)
 
   watch(instanceId, () => {
@@ -93,6 +115,6 @@ export const useKanbanData = () => {
   })
   return {
     columns, deals, totalPipeline, cardsByColumn, funnelColumns, dealsByFunnel, totalByFunnel,
-    cardsByFunnelColumn, moveDeal, moveDealInFunnel, findDealById, refreshDeals, dealsLoading, dealsError
+    cardsByFunnelColumn, moveDeal, moveDealInFunnel, assignDealOwner, findDealById, refreshDeals, dealsLoading, dealsError
   }
 }

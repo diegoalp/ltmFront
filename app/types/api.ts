@@ -23,7 +23,7 @@ export interface ApiActivity { id: number, title: string, description?: string |
 export interface ApiPublicForm { id: number, name: string, headline: string, channel?: string | null, funnel_id: number, fields?: string[], active: boolean }
 
 export interface ApiBusiness {
-  id: number, client_id: number, user_id: number, category_id: number, product_id: number | null, funnel_id: number, stage_id: number,
+  id: number, client_id: number, user_id: number, category_id: number, product_id: number | null, funnel_id: number, stage_id: number, lead_source_id?: number | null,
   status: number, value: number, priority?: DealCard['priority'], dueDate?: string | null, expiration_date?: string | null, lossReason?: string | null,
   customData?: Record<string, unknown>, custom_data?: Record<string, unknown>, created_at: string,
   client?: { fullname: string, type: 'individual' | 'company', registration: string, birthdate?: string, gender?: string, profession?: string, street?: string, district?: string, city?: string, state?: string, zipcode?: string, extra?: Record<string, unknown>, customData?: Record<string, unknown>, custom_data?: Record<string, unknown>, phones?: Array<{ number: string }> },
