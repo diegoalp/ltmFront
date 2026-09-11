@@ -11,58 +11,83 @@
         </button>
       </header>
 
-      <form class="space-y-6 p-6" @submit.prevent="submit">
-        <section class="space-y-4">
-          <div><h3 class="section-title">Dados do cliente</h3></div>
+      <div class="grid border-b border-slate-100 px-6 dark:border-slate-800" :style="{ gridTemplateColumns: `repeat(${wizardSteps.length}, minmax(0, 1fr))` }">
+        <div v-for="(item, index) in wizardSteps" :key="item.key" class="flex min-w-0 items-center gap-2 border-b-2 py-3 text-xs font-bold" :class="activeStepIndex === index ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" :class="activeStepIndex === index ? 'bg-indigo-600 text-white' : activeStepIndex > index ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800'">{{ activeStepIndex > index ? '✓' : index + 1 }}</span>
+          <span class="truncate">{{ item.label }}</span>
+        </div>
+      </div>
+
+      <form ref="formElement" class="space-y-6 p-6" @submit.prevent="advanceOrSubmit">
+        <section v-if="activeStep.key === 'client'" class="space-y-5">
+          <div><h3 class="section-title">Dados do cliente</h3><p class="mt-1 text-xs text-slate-500">Identificação e vínculo do cliente.</p></div>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="space-y-1.5"><span class="field-label">Nome do cliente *</span><input v-model="form.fullname" required class="field-input" /></label>
             <label class="space-y-1.5"><span class="field-label">Tipo de pessoa *</span><select v-model="form.clientType" required class="field-input"><option value="individual">Pessoa física</option><option value="company">Pessoa jurídica</option></select></label>
             <label class="space-y-1.5"><span class="field-label">{{ form.clientType === 'company' ? 'CNPJ' : 'CPF' }} *</span><input :value="form.registration" required :maxlength="form.clientType === 'company' ? 18 : 14" inputmode="numeric" class="field-input" @input="updateRegistration" /></label>
+            <label class="space-y-1.5"><span class="field-label">Origem do lead</span><select v-model="form.leadSourceId" class="field-input"><option value="">Não informada</option><option v-for="source in leadSources" :key="source.id" :value="String(source.id)">{{ source.name }}</option></select></label>
+            <label class="space-y-1.5">
+              <span class="field-label">Responsável pelo negócio *</span>
+              <select v-model="form.userId" required :disabled="!assignableUsers.length" class="field-input">
+                <option value="" disabled>Selecione um responsável</option>
+                <option v-for="owner in assignableUsers" :key="owner.id" :value="String(owner.id)">
+                  {{ owner.name }}{{ String(owner.id) === String(user?.id) ? ' (você)' : '' }}
+                </option>
+              </select>
+            </label>
           </div>
+          <p v-if="!assignableUsers.length" class="text-sm text-amber-700 dark:text-amber-300">Nenhum responsável disponível para este funil.</p>
         </section>
 
-        <section v-for="section in clientFieldSections" :key="section.title" class="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <h3 class="section-title">{{ section.title }}</h3>
+        <section v-else-if="activeStep.kind === 'client-section'" class="space-y-5">
+          <h3 class="section-title">{{ activeStep.label }}</h3>
           <div class="grid gap-4 sm:grid-cols-2">
-            <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+            <BusinessCustomFieldInput v-for="field in activeStep.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
           </div>
         </section>
 
-        <section class="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <div><h3 class="section-title">Produto</h3></div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <label class="space-y-1.5"><span class="field-label">Categoria *</span><select v-model="form.categoryId" required class="field-input"><option value="" disabled>Selecione</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></select></label>
-            <label class="space-y-1.5"><span class="field-label">Produto <span class="font-normal text-slate-400">(opcional)</span></span><select v-model="form.productId" :disabled="!form.categoryId" class="field-input"><option value="">Definir posteriormente</option><option v-for="product in availableProducts" :key="product.id" :value="String(product.id)">{{ product.name }}</option></select></label>
+        <section v-else class="space-y-6">
+          <section class="space-y-5">
+            <div><h3 class="section-title">Produto</h3><p class="mt-1 text-xs text-slate-500">Classificação e produto relacionado ao negócio.</p></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="space-y-1.5"><span class="field-label">Categoria *</span><select v-model="form.categoryId" required class="field-input"><option value="" disabled>Selecione</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></select></label>
+              <label class="space-y-1.5"><span class="field-label">Produto <span class="font-normal text-slate-400">(opcional)</span></span><select v-model="form.productId" :disabled="!form.categoryId" class="field-input"><option value="">Definir posteriormente</option><option v-for="product in availableProducts" :key="product.id" :value="String(product.id)">{{ product.name }}</option></select></label>
+            </div>
+          </section>
+          <div v-if="productFieldSections.length" class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <section v-for="section in productFieldSections" :key="section.title" class="space-y-3">
+              <h4 class="section-title">{{ section.title }}</h4>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+              </div>
+            </section>
+          </div>
+          <section class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <div><h3 class="section-title">Dados do negócio</h3><p class="mt-1 text-xs text-slate-500">Informações comerciais, valores e observações.</p></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="space-y-1.5 sm:col-span-2"><span class="field-label">Observações</span><textarea v-model="form.notes" rows="3" class="field-input" /></label>
+              <label class="space-y-1.5 sm:col-span-2"><span class="field-label">Valor do negócio</span><input :value="businessValueDisplay" :disabled="configuredBusinessValue !== null" inputmode="numeric" class="field-input disabled:bg-slate-100 disabled:text-slate-500 dark:disabled:bg-slate-800" @input="updateValue" /><span v-if="configuredBusinessValue !== null" class="text-[11px] text-slate-400">Preenchido automaticamente pelo campo monetário configurado.</span></label>
+            </div>
+          </section>
+          <div v-if="businessFieldSections.length" class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <section v-for="section in businessFieldSections" :key="section.title" class="space-y-3">
+              <h4 class="section-title">{{ section.title }}</h4>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+              </div>
+            </section>
           </div>
         </section>
 
-        <section v-for="section in productFieldSections" :key="section.title" class="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <h3 class="section-title">{{ section.title }}</h3>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+        <footer class="flex items-center justify-between gap-3 border-t border-slate-100 pt-5 dark:border-slate-800">
+          <button v-if="activeStepIndex > 0" type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="activeStepIndex--"><Icon name="mdi:arrow-left" class="mr-1" />Voltar</button>
+          <span v-else />
+          <div class="flex gap-3">
+            <button type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="close">Cancelar</button>
+            <button type="submit" :disabled="saving || (isLastStep && !canSubmit)" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50">
+              <Icon v-if="saving" name="mdi:loading" class="animate-spin" />{{ saving ? 'Salvando...' : isLastStep ? 'Salvar alterações' : 'Continuar' }}<Icon v-if="!saving && !isLastStep" name="mdi:arrow-right" />
+            </button>
           </div>
-        </section>
-
-        <section class="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <div><h3 class="section-title">Dados do negócio</h3></div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <label class="space-y-1.5 sm:col-span-2"><span class="field-label">Observações</span><textarea v-model="form.notes" rows="3" class="field-input" /></label>
-            <label class="space-y-1.5 sm:col-span-2"><span class="field-label">Valor do negócio</span><input :value="businessValueDisplay" :disabled="configuredBusinessValue !== null" inputmode="numeric" class="field-input disabled:bg-slate-100 disabled:text-slate-500 dark:disabled:bg-slate-800" @input="updateValue" /><span v-if="configuredBusinessValue !== null" class="text-[11px] text-slate-400">Preenchido automaticamente pelo campo monetário configurado.</span></label>
-          </div>
-        </section>
-
-        <section v-for="section in businessFieldSections" :key="section.title" class="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <h3 class="section-title">{{ section.title }}</h3>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
-          </div>
-        </section>
-
-        <footer class="flex items-center justify-end gap-3 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <button type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="close">Cancelar</button>
-          <button type="submit" :disabled="saving || !canSubmit" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50">
-            <Icon v-if="saving" name="mdi:loading" class="animate-spin" />{{ saving ? 'Salvando...' : 'Salvar alterações' }}
-          </button>
         </footer>
       </form>
     </div>
@@ -75,16 +100,21 @@ import type { DealCard, CRMCustomField, CRMCustomFieldType } from '~/types/crm'
 const props = defineProps<{ open: boolean, deal: DealCard | null }>()
 const emit = defineEmits<{ close: [], saved: [] }>()
 const { request } = useApi()
+const { user } = useAuth()
 const { categories } = useCategories()
 const { products } = useProducts()
 const { customFields } = useCustomFields()
 const { customFieldSections } = useCrmSettings()
+const { leadSources, loadLeadSources } = useLeadSources()
+const { users, loadUsers } = useUsers()
 const { refreshDeals } = useKanbanData()
 const toast = useToast()
 const saving = ref(false)
 const hydrating = ref(false)
+const activeStepIndex = ref(0)
+const formElement = ref<HTMLFormElement | null>(null)
 const customValues = reactive<Record<string, unknown>>({})
-const form = reactive({ fullname: '', clientType: 'individual' as DealCard['clientType'], registration: '', value: '', notes: '', categoryId: '', productId: '' })
+const form = reactive({ fullname: '', clientType: 'individual' as DealCard['clientType'], registration: '', value: '', leadSourceId: '', notes: '', categoryId: '', productId: '', userId: '' })
 
 const onlyDigits = (value: string) => value.replace(/\D/g, '')
 const maskCpf = (value: string) => onlyDigits(value).slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
@@ -93,6 +123,20 @@ const currencyMask = (value: string) => new Intl.NumberFormat('pt-BR', { style: 
 const parseCurrency = (value: unknown) => Number(String(value || '').replace(/[^\d,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0
 const updateRegistration = (event: Event) => { form.registration = form.clientType === 'company' ? maskCnpj((event.target as HTMLInputElement).value) : maskCpf((event.target as HTMLInputElement).value) }
 const updateValue = (event: Event) => { if (configuredBusinessValue.value === null) form.value = currencyMask((event.target as HTMLInputElement).value) }
+const isAdministrativeRole = (role: string) => ['admin', 'master', 'mastr'].includes(role.toLowerCase())
+const assignableUsers = computed(() => {
+  if (!props.deal) return []
+
+  const currentUser = user.value
+    ? users.value.find(item => String(item.id) === String(user.value?.id)) || {
+      id: Number(user.value.id), name: user.value.name, email: '', role: user.value.role,
+      teamId: null, funnelId: user.value.funnelId ?? null, supervisorId: null
+    }
+    : null
+  const candidates = currentUser ? [currentUser, ...users.value.filter(item => String(item.id) !== String(currentUser.id))] : users.value
+
+  return candidates.filter(item => isAdministrativeRole(item.role) || String(item.funnelId) === String(props.deal?.funnelId))
+})
 const availableCategories = computed(() => categories.value.filter(item => item.active && item.funnelIds.includes(String(props.deal?.funnelId || ''))))
 const availableProducts = computed(() => products.value.filter(item => item.funnelIds.includes(String(props.deal?.funnelId || '')) && item.categoryIds.includes(Number(form.categoryId))))
 const conditionMatches = (field: CRMCustomField) => field.conditions.every(condition => {
@@ -123,31 +167,51 @@ const groupFieldsByFormSection = (fields: CRMCustomField[]) => {
 const clientFieldSections = computed(() => groupFieldsByFormSection(clientFields.value))
 const productFieldSections = computed(() => groupFieldsByFormSection(productFields.value))
 const businessFieldSections = computed(() => groupFieldsByFormSection(businessFields.value))
+const wizardSteps = computed(() => [
+  { key: 'client', kind: 'client', label: 'Cliente', fields: [] as CRMCustomField[] },
+  ...clientFieldSections.value.map(section => ({ key: `client-section-${section.title}`, kind: 'client-section', label: section.title, fields: section.fields })),
+  { key: 'deal', kind: 'deal', label: 'Produto e negócio', fields: [] as CRMCustomField[] }
+])
+const activeStep = computed(() => wizardSteps.value[Math.min(activeStepIndex.value, wizardSteps.value.length - 1)] || wizardSteps.value[0])
+const isLastStep = computed(() => activeStepIndex.value === wizardSteps.value.length - 1)
 const configuredBusinessValue = computed(() => {
   const field = visibleFields.value.find(item => item.type === 'currency' && item.isBusinessValue)
   return field ? parseCurrency(customValues[field.id]) : null
 })
 const businessValueDisplay = computed(() => configuredBusinessValue.value === null ? form.value : currencyMask(String(Math.round(configuredBusinessValue.value * 100))))
 const wideField = (field: CRMCustomField) => ['textarea', 'file', 'group'].includes(field.type)
-const canSubmit = computed(() => Boolean(props.deal && form.fullname.trim() && form.registration.trim() && form.categoryId))
+const selectedOwnerIsAllowed = computed(() => assignableUsers.value.some(item => String(item.id) === form.userId))
+const canSubmit = computed(() => Boolean(props.deal && form.fullname.trim() && form.registration.trim() && form.categoryId && selectedOwnerIsAllowed.value))
 
 watch(() => props.open, value => {
   if (!value || !props.deal) return
   hydrating.value = true
+  activeStepIndex.value = 0
   Object.assign(form, {
     fullname: props.deal.title,
     clientType: props.deal.clientType,
     registration: props.deal.clientType === 'company' ? maskCnpj(props.deal.document) : maskCpf(props.deal.document),
     value: currencyMask(String(Math.round(props.deal.value * 100))),
+    leadSourceId: props.deal.leadSourceId ? String(props.deal.leadSourceId) : '',
     notes: props.deal.notes || '',
     categoryId: String(props.deal.categoryId),
-    productId: props.deal.productId ? String(props.deal.productId) : ''
+    productId: props.deal.productId ? String(props.deal.productId) : '',
+    userId: String(props.deal.ownerId || user.value?.id || '')
   })
   Object.keys(customValues).forEach(key => delete customValues[key])
   Object.assign(customValues, props.deal.clientCustomFields, props.deal.customFields)
+  void Promise.all([loadLeadSources(), loadUsers()])
   nextTick(() => { hydrating.value = false })
 }, { immediate: true })
 
+watch(wizardSteps, steps => {
+  if (activeStepIndex.value > steps.length - 1) activeStepIndex.value = Math.max(steps.length - 1, 0)
+})
+watch(assignableUsers, owners => {
+  if (!props.open || hydrating.value) return
+  if (owners.some(owner => String(owner.id) === form.userId)) return
+  form.userId = owners[0] ? String(owners[0].id) : ''
+}, { immediate: true })
 watch(() => form.clientType, () => { if (!hydrating.value) form.registration = '' })
 watch(() => form.categoryId, () => { if (!hydrating.value) form.productId = '' })
 watch(visibleFields, fields => {
@@ -177,6 +241,13 @@ const serializeCustomFields = (fields: CRMCustomField[]) => Object.fromEntries(f
   return [field.id, rows]
 }))
 const close = () => { if (!saving.value) emit('close') }
+const advanceOrSubmit = () => {
+  if (!isLastStep.value) {
+    if (formElement.value?.reportValidity()) activeStepIndex.value++
+    return
+  }
+  void submit()
+}
 const submit = async () => {
   if (!props.deal || !canSubmit.value) return
   saving.value = true
@@ -188,8 +259,10 @@ const submit = async () => {
       extra: { custom_fields: serializeCustomFields(clientFields.value) }
     } })
     await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: {
+      user_id: Number(form.userId),
       category_id: Number(form.categoryId),
       product_id: form.productId ? Number(form.productId) : null,
+      lead_source_id: form.leadSourceId ? Number(form.leadSourceId) : null,
       value: configuredBusinessValue.value ?? parseCurrency(form.value),
       notes: form.notes.trim() || null,
       custom_data: { custom_fields: serializeCustomFields(dealCustomDataFields.value) }

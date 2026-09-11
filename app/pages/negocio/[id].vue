@@ -32,10 +32,10 @@
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
           <div>
             <div class="grid grid-cols-1 gap-2">
-              <h1 class="text-3xl font-medium tracking-tight text-slate-900 dark:text-slate-100">{{ deal.title }}</h1>
+              <button type="button" class="copy-value text-3xl font-medium tracking-tight" title="Copiar cliente" @click="copyValue('Cliente', deal.title)">{{ deal.title }}</button>
               <div class="flex gap-3">
-                  <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-600/40 dark:text-sky-300 px-2.5 py-1 rounded-md">{{ categoryName }}</span>
-                  <span class="text-xs rounded-md px-2.5 py-1" :style="productStyle">{{ productName }}</span>
+                  <button type="button" class="rounded-md bg-sky-100 px-2.5 py-1 text-xs text-sky-800 transition hover:ring-2 hover:ring-sky-300 dark:bg-sky-600/40 dark:text-sky-300" title="Copiar categoria" @click="copyValue('Categoria', categoryName)">{{ categoryName }}</button>
+                  <button type="button" class="rounded-md px-2.5 py-1 text-xs transition hover:ring-2 hover:ring-slate-300" :style="productStyle" title="Copiar produto" @click="copyValue('Produto', productName)">{{ productName }}</button>
               </div>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
@@ -53,7 +53,7 @@
                   </option>
                 </select>
               </label>
-              <span>Criado em {{ formatDate(deal.createdAt) }}</span>
+              <span class="flex items-center gap-1">Criado em <button type="button" class="copy-value inline text-sm text-slate-500 dark:text-slate-400" title="Copiar data de criação" @click="copyValue('Data de criação', formatDate(deal.createdAt))">{{ formatDate(deal.createdAt) }}</button></span>
             </div>
           </div>
 
@@ -185,7 +185,7 @@
               <div class="grid gap-4 sm:grid-cols-2">
                 <div v-for="field in businessDetailFields" :key="field.id" class="rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
                   <p class="text-[10px] font-medium uppercase text-slate-400">{{ field.label }}</p>
-                  <p class="mt-1 break-words text-sm font-bold text-slate-900 dark:text-slate-100">{{ displaySubFieldValue(field.type, field.value) }}</p>
+                  <button type="button" class="copy-value mt-1 break-words text-sm font-bold" :title="`Copiar ${field.label}`" @click="copyValue(field.label, displaySubFieldValue(field.type, field.value))">{{ displaySubFieldValue(field.type, field.value) }}</button>
                 </div>
               </div>
             </div>
@@ -201,7 +201,7 @@
                   <div class="grid gap-3 sm:grid-cols-2">
                     <div v-for="subField in field.subFields.filter(sub => hasCustomFieldValue(row[sub.key]))" :key="subField.key">
                       <p class="text-[10px] font-medium uppercase text-slate-400">{{ subField.label }}</p>
-                      <p class="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-200">{{ displaySubFieldValue(subField.type, row[subField.key]) }}</p>
+                      <button type="button" class="copy-value mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-200" :title="`Copiar ${subField.label}`" @click="copyValue(subField.label, displaySubFieldValue(subField.type, row[subField.key]))">{{ displaySubFieldValue(subField.type, row[subField.key]) }}</button>
                     </div>
                   </div>
                 </div>
@@ -225,8 +225,12 @@
                   <div v-for="event in timeline" :key="event.id" class="relative">
                     <span class="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-white dark:ring-slate-900"></span>
                     <div class="text-xs">
-                      <span class="font-semibold text-slate-900 dark:text-slate-100 block">{{ event.title }}</span>
-                      <span class="text-[10px] text-slate-400 block mt-0.5">{{ formatDate(event.date) }} por {{ event.userName }}</span>
+                      <button type="button" class="copy-value font-semibold" title="Copiar evento" @click="copyValue('Evento', event.title)">{{ event.title }}</button>
+                      <span class="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-400">
+                        <button type="button" class="copy-value inline text-[10px] text-slate-400 dark:text-slate-400" title="Copiar data do evento" @click="copyValue('Data do evento', formatDate(event.date))">{{ formatDate(event.date) }}</button>
+                        <span>por</span>
+                        <button type="button" class="copy-value inline text-[10px] text-slate-400 dark:text-slate-400" title="Copiar usuário do evento" @click="copyValue('Usuário do evento', event.userName)">{{ event.userName }}</button>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -242,7 +246,7 @@
                 <div v-for="(phone, index) in [ { number: deal.phone, isValidated: true, isWhatsapp: true } ]" :key="index" class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 px-3 py-2 rounded-xl text-sm">
                   <div class="flex items-center gap-2">
                     <span :class="phone.isValidated ? 'bg-emerald-500' : 'bg-amber-500'" class="h-2 w-2 rounded-full inline-block"></span>
-                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ phone.number }}</span>
+                    <button type="button" class="copy-value text-sm font-medium text-slate-700 dark:text-slate-300" title="Copiar telefone" @click="copyValue('Telefone', phone.number)">{{ phone.number }}</button>
                   </div>
                   
                   <a v-if="phone.isWhatsapp" :href="`https://wa.me/${phone.number.replace(/\D/g, '')}`" target="_blank" class="text-emerald-600 hover:text-emerald-500 dark:text-emerald-500 transition" title="Chamar no WhatsApp">
@@ -374,19 +378,20 @@ const fieldConditionMatches = (field: CRMCustomField) => field.conditions.every(
 })
 const applicableFields = computed(() => customFields.value.filter(field => fieldConditionMatches(field)))
 const hasClientValue = hasCustomFieldValue
-const clientDetailFields = computed(() => applicableFields.value.filter(field => field.section === 'client' && field.type !== 'group' && hasClientValue(deal.value?.clientCustomFields[field.id])))
+// Saved values drive the detail view; creation conditions must not hide existing data.
+const clientDetailFields = computed(() => savedCustomFieldEntries(deal.value?.clientCustomFields || {}, customFields.value).filter(field => field.type !== 'group'))
 // Saved values drive the detail view; creation conditions must not hide existing data.
 const businessDetailFields = computed(() => savedCustomFieldEntries(deal.value?.customFields || {}, customFields.value).filter(field => field.type !== 'group'))
 const repeatableBusinessFields = computed(() => customFields.value.filter(field => field.type === 'group' && groupFieldRows(field).length > 0))
 
 const displaySubFieldValue = formatCustomFieldValue
-const displayFieldValue = (field: CRMCustomField, value: unknown) => displaySubFieldValue(field.type, value)
+const displayFieldValue = (field: { type: string }, value: unknown) => displaySubFieldValue(field.type, value)
 const groupFieldRows = (field: CRMCustomField) => {
   const rows = deal.value?.customFields[field.id]
   return Array.isArray(rows) ? rows.filter(row => row && typeof row === 'object' && field.subFields.some(subField => hasCustomFieldValue(row[subField.key]))) as Array<Record<string, unknown>> : []
 }
 
-const copyClientValue = async (label: string, value: unknown) => {
+const copyValue = async (label: string, value: unknown) => {
   if (!import.meta.client) return
 
   const text = String(value ?? '').trim()
@@ -412,6 +417,7 @@ const copyClientValue = async (label: string, value: unknown) => {
     toast.error('Não foi possível copiar o conteúdo.')
   }
 }
+const copyClientValue = copyValue
 
 const productTextColor = (hex: string) => {
   const normalized = hex.replace('#', '')
@@ -519,7 +525,7 @@ const customerAge = computed(() => {
 
 <style scoped>
 .copy-value {
-  @apply block max-w-full cursor-copy rounded-md text-left text-slate-900 outline-none transition hover:text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:text-slate-100 dark:hover:text-indigo-300;
+  @apply inline-block max-w-full cursor-copy rounded-md text-left text-slate-900 outline-none transition hover:text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:text-slate-100 dark:hover:text-indigo-300;
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
