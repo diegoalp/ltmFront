@@ -190,6 +190,9 @@ export interface CRMCustomField {
   id: string
   label: string
   section: CRMCustomFieldSection
+  customFieldSectionId: string | null
+  formSection: string | null
+  formSectionOrder: number
   type: CRMCustomFieldType
   required: boolean
   defaultValue: boolean | null
@@ -198,6 +201,14 @@ export interface CRMCustomField {
   conditions: CRMCustomFieldCondition[]
   options: string[]
   subFields: CRMCustomSubField[]
+  position: number
+}
+
+export interface CRMCustomFieldSectionConfig {
+  id: string
+  name: string
+  section: CRMCustomFieldSection
+  position: number
 }
 
 export interface CRMPermissionRole {

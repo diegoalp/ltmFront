@@ -22,6 +22,7 @@
               <tr>
                 <th class="px-5 py-3">Campo</th>
                 <th class="px-5 py-3">Cadastro</th>
+                <th class="px-5 py-3">Seção da ficha</th>
                 <th class="px-5 py-3">Tipo</th>
                 <th class="px-5 py-3">Regra de exibição</th>
                 <th class="px-5 py-3">Obrigatório</th>
@@ -35,6 +36,7 @@
                   <span v-if="field.isBusinessValue" class="ml-1 inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">Valor do negócio</span>
                 </td>
                 <td class="px-5 py-4 text-slate-600 dark:text-slate-300">{{ sectionLabels[field.section] }}</td>
+                <td class="px-5 py-4 text-slate-600 dark:text-slate-300">{{ fieldSectionName(field) }}</td>
                 <td class="px-5 py-4"><span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ field.type }}</span></td>
                 <td class="px-5 py-4 text-slate-500 dark:text-slate-400">{{ conditionSummary(field) }}</td>
                 <td class="px-5 py-4">
@@ -52,14 +54,46 @@
         </div>
       </section>
 
-      <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">{{ editingId ? 'Editar campo' : 'Adicionar campo' }}</h2>
-          <button v-if="editingId" type="button" class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" @click="resetForm">Cancelar</button>
-        </div>
-        <form class="mt-4 space-y-3" @submit.prevent="saveField">
+      <aside class="space-y-6">
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Seções da ficha</h2>
+            <button v-if="editingSectionId" type="button" class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" @click="resetSectionForm">Cancelar</button>
+          </div>
+          <form class="mt-4 space-y-3" @submit.prevent="saveFieldSection">
+            <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Nome da seção</span><input v-model="sectionForm.name" required class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950" placeholder="Ex.: Dados financeiros" /></label>
+            <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Cadastro</span><select v-model="sectionForm.section" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950"><option value="business">Negócio</option><option value="product">Produto</option><option value="client">Cliente</option></select></label>
+            <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Ordem</span><input v-model.number="sectionForm.position" type="number" min="0" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950" /></label>
+            <button type="submit" :disabled="savingSection" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800">
+              <Icon name="mdi:folder-plus-outline" size="18" />
+              {{ savingSection ? 'Salvando...' : editingSectionId ? 'Salvar seção' : 'Adicionar seção' }}
+            </button>
+          </form>
+          <div class="mt-5 space-y-2">
+            <article v-for="section in sortedCustomFieldSections" :key="section.id" class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-950">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-slate-800 dark:text-slate-100">{{ section.name }}</p>
+                <p class="text-xs text-slate-500">{{ sectionLabels[section.section] }} · ordem {{ section.position }}</p>
+              </div>
+              <div class="flex shrink-0 gap-1">
+                <button type="button" class="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950" title="Editar seção" @click="editFieldSection(section)"><Icon name="mdi:pencil-outline" size="16" /></button>
+                <button type="button" :disabled="removingSectionId === section.id" class="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950" title="Remover seção" @click="deleteFieldSection(section)"><Icon :name="removingSectionId === section.id ? 'mdi:loading' : 'mdi:trash-can-outline'" :class="{ 'animate-spin': removingSectionId === section.id }" size="16" /></button>
+              </div>
+            </article>
+            <p v-if="!customFieldSections.length" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-500 dark:border-slate-800">Nenhuma seção cadastrada.</p>
+          </div>
+        </section>
+
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">{{ editingId ? 'Editar campo' : 'Adicionar campo' }}</h2>
+            <button v-if="editingId" type="button" class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" @click="resetForm">Cancelar</button>
+          </div>
+          <form class="mt-4 space-y-3" @submit.prevent="saveField">
           <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Nome do campo</span><input v-model="form.label" required class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950" placeholder="Ex.: Órgão" /></label>
           <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Cadastro</span><select v-model="form.section" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950"><option value="business">Negócio</option><option value="product">Produto</option><option value="client">Cliente</option></select></label>
+          <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Seção da ficha</span><select v-model="form.customFieldSectionId" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950"><option value="">Sem seção</option><option v-for="section in fieldSectionOptions" :key="section.id" :value="section.id">{{ section.name }}</option></select></label>
+          <label class="block space-y-1.5"><span class="text-xs font-bold uppercase tracking-wide text-slate-500">Ordem do campo</span><input v-model.number="form.position" type="number" min="0" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950" /></label>
           <select v-model="form.type" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-950">
             <option value="text">Texto</option>
             <option value="textarea">Texto longo</option>
@@ -145,27 +179,33 @@
             <Icon name="mdi:form-textbox" size="18" />
             {{ saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Adicionar campo' }}
           </button>
-        </form>
+          </form>
+        </section>
       </aside>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CRMCustomField, CRMCustomFieldCondition, CRMCustomFieldSection, CRMCustomFieldType, CRMCustomSubField } from '~/types/crm'
+import type { CRMCustomField, CRMCustomFieldCondition, CRMCustomFieldSection, CRMCustomFieldSectionConfig, CRMCustomFieldType, CRMCustomSubField } from '~/types/crm'
 
-const { customFields, funnels, addCustomField, updateCustomField, removeCustomField } = useCrmSettings()
+const { customFields, customFieldSections, funnels, addCustomField, updateCustomField, removeCustomField, addCustomFieldSection, updateCustomFieldSection, removeCustomFieldSection } = useCrmSettings()
 const { categories } = useCategories()
 const { products } = useProducts()
 const toast = useToast()
 const saving = ref(false)
+const savingSection = ref(false)
 const editingId = ref<string | null>(null)
+const editingSectionId = ref<string | null>(null)
 const removingId = ref<string | null>(null)
+const removingSectionId = ref<string | null>(null)
 const sectionLabels: Record<CRMCustomFieldSection, string> = { business: 'Negócio', product: 'Produto', client: 'Cliente' }
 
 const form = reactive({
   label: '',
   section: 'business' as CRMCustomFieldSection,
+  customFieldSectionId: '',
+  position: 0,
   type: 'text' as CRMCustomFieldType,
   required: false,
   defaultValue: false as boolean | null,
@@ -174,11 +214,18 @@ const form = reactive({
   subFields: [] as CRMCustomSubField[],
   conditions: [] as CRMCustomFieldCondition[]
 })
+const sectionForm = reactive({
+  name: '',
+  section: 'business' as CRMCustomFieldSection,
+  position: 0
+})
 
 const resetForm = () => {
   editingId.value = null
   form.label = ''
   form.section = 'business'
+  form.customFieldSectionId = ''
+  form.position = 0
   form.type = 'text'
   form.required = false
   form.defaultValue = false
@@ -192,6 +239,8 @@ const editField = (field: CRMCustomField) => {
   editingId.value = field.id
   form.label = field.label
   form.section = field.section
+  form.customFieldSectionId = field.customFieldSectionId || ''
+  form.position = field.position
   form.type = field.type
   form.required = field.required
   form.defaultValue = field.defaultValue ?? false
@@ -226,6 +275,48 @@ const conditionLabel = (condition: CRMCustomFieldCondition) => {
   return `${field} ${condition.operator === 'equals' ? '=' : '≠'} ${value}`
 }
 const conditionSummary = (field: CRMCustomField) => field.conditions.length ? field.conditions.map(conditionLabel).join(' e ') : 'Sempre exibido'
+const defaultFormSection = (section: CRMCustomFieldSection) => section === 'client' ? 'Dados complementares do cliente' : section === 'product' ? 'Dados complementares do produto' : 'Dados complementares do negócio'
+const sortedCustomFieldSections = computed(() => [...customFieldSections.value].sort((a, b) => a.section.localeCompare(b.section) || a.position - b.position || a.name.localeCompare(b.name)))
+const fieldSectionOptions = computed(() => customFieldSections.value
+  .filter(section => section.section === form.section)
+  .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name)))
+const fieldSectionName = (field: CRMCustomField) => customFieldSections.value.find(section => section.id === field.customFieldSectionId)?.name || field.formSection || defaultFormSection(field.section)
+
+const resetSectionForm = () => {
+  editingSectionId.value = null
+  sectionForm.name = ''
+  sectionForm.section = 'business'
+  sectionForm.position = 0
+}
+const editFieldSection = (section: CRMCustomFieldSectionConfig) => {
+  editingSectionId.value = section.id
+  sectionForm.name = section.name
+  sectionForm.section = section.section
+  sectionForm.position = section.position
+}
+const saveFieldSection = async () => {
+  savingSection.value = true
+  try {
+    const payload = { name: sectionForm.name.trim(), section: sectionForm.section, position: Number(sectionForm.position) || 0 }
+    if (editingSectionId.value) await updateCustomFieldSection(editingSectionId.value, payload)
+    else await addCustomFieldSection(payload)
+    toast.success(editingSectionId.value ? 'Seção atualizada com sucesso.' : 'Seção adicionada com sucesso.')
+    resetSectionForm()
+  } catch {
+    // Request errors are displayed globally by useApi.
+  } finally { savingSection.value = false }
+}
+const deleteFieldSection = async (section: CRMCustomFieldSectionConfig) => {
+  if (!await toast.confirm(`A seção “${section.name}” será removida. Os campos vinculados ficarão sem seção.`, { title: 'Remover seção?', confirmLabel: 'Remover' })) return
+  removingSectionId.value = section.id
+  try {
+    await removeCustomFieldSection(section.id)
+    if (editingSectionId.value === section.id) resetSectionForm()
+    toast.success('Seção removida com sucesso.')
+  } catch {
+    // Request errors are displayed globally by useApi.
+  } finally { removingSectionId.value = null }
+}
 
 const saveField = async () => {
   const options = form.type === 'select' ? form.options.map(item => item.trim()).filter(Boolean) : []
@@ -244,7 +335,7 @@ const saveField = async () => {
   }
   saving.value = true
   try {
-    const payload = { ...form, label: form.label.trim(), defaultValue: form.type === 'checkbox' ? form.defaultValue ?? false : null, isBusinessValue: form.type === 'currency' ? form.isBusinessValue : false, options, subFields, conditions: form.conditions.map(item => ({ ...item, value: [...item.value] })), visibleWhen: form.conditions.length ? form.conditions.map(conditionLabel).join(' e ') : 'Sempre exibido' }
+    const payload = { ...form, customFieldSectionId: form.customFieldSectionId || null, formSection: null, formSectionOrder: 0, label: form.label.trim(), position: Number(form.position) || 0, defaultValue: form.type === 'checkbox' ? form.defaultValue ?? false : null, isBusinessValue: form.type === 'currency' ? form.isBusinessValue : false, options, subFields, conditions: form.conditions.map(item => ({ ...item, value: [...item.value] })), visibleWhen: form.conditions.length ? form.conditions.map(conditionLabel).join(' e ') : 'Sempre exibido' }
     if (editingId.value) await updateCustomField(editingId.value, payload)
     else await addCustomField(payload)
     toast.success(editingId.value ? 'Campo atualizado com sucesso.' : 'Campo personalizado adicionado com sucesso.')
@@ -267,6 +358,7 @@ const deleteField = async (field: CRMCustomField) => {
 }
 
 watch(() => form.section, section => {
+  if (!fieldSectionOptions.value.some(item => item.id === form.customFieldSectionId)) form.customFieldSectionId = ''
   if (section !== 'business') {
     form.conditions.forEach(condition => {
       if (condition.field === 'product_id' || condition.field === 'funnel_id') {

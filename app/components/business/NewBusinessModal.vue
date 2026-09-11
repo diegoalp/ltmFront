@@ -9,15 +9,15 @@
         <button type="button" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800" aria-label="Fechar" @click="close"><Icon name="mdi:close" size="20" /></button>
       </header>
 
-      <div class="grid grid-cols-2 border-b border-slate-100 px-6 dark:border-slate-800">
-        <div v-for="item in steps" :key="item.number" class="flex items-center gap-2 border-b-2 py-3 text-xs font-bold" :class="step === item.number ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'">
-          <span class="flex h-6 w-6 items-center justify-center rounded-full" :class="step === item.number ? 'bg-indigo-600 text-white' : step > item.number ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800'">{{ step > item.number ? '✓' : item.number }}</span>
-          {{ item.label }}
+      <div class="grid border-b border-slate-100 px-6 dark:border-slate-800" :style="{ gridTemplateColumns: `repeat(${wizardSteps.length}, minmax(0, 1fr))` }">
+        <div v-for="(item, index) in wizardSteps" :key="item.key" class="flex min-w-0 items-center gap-2 border-b-2 py-3 text-xs font-bold" :class="activeStepIndex === index ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" :class="activeStepIndex === index ? 'bg-indigo-600 text-white' : activeStepIndex > index ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800'">{{ activeStepIndex > index ? '✓' : index + 1 }}</span>
+          <span class="truncate">{{ item.label }}</span>
         </div>
       </div>
 
       <form ref="formElement" class="space-y-6 p-6" @submit.prevent="advanceOrSubmit">
-        <section v-if="step === 1" class="space-y-5">
+        <section v-if="activeStep.key === 'client'" class="space-y-5">
           <div><h3 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Dados do cliente</h3><p class="mt-1 text-xs text-slate-500">Identificação e contato do cliente.</p></div>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Nome do cliente *</span><input v-model="form.fullname" required class="field-input" /></label>
@@ -36,29 +36,55 @@
             </label>
           </div>
           <p v-if="!assignableUsers.length" class="text-sm text-amber-700 dark:text-amber-300">Nenhum responsável disponível para este funil.</p>
-          <div v-if="clientFields.length" class="grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-2 dark:border-slate-800">
-            <BusinessCustomFieldInput v-for="field in clientFields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+        </section>
+
+        <section v-else-if="activeStep.kind === 'client-section'" class="space-y-5">
+          <div><h3 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{{ activeStep.label }}</h3></div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <BusinessCustomFieldInput v-for="field in activeStep.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
           </div>
         </section>
 
-        <section v-else class="space-y-5">
-          <div><h3 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Produto e negócio</h3><p class="mt-1 text-xs text-slate-500">Classificação, informações comerciais e valores.</p></div>
+        <section v-else class="space-y-6">
+          <section class="space-y-5">
+            <div><h3 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Produto</h3><p class="mt-1 text-xs text-slate-500">Classificação e produto relacionado ao negócio.</p></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Categoria *</span><select v-model="form.categoryId" required :disabled="!form.funnelId" class="field-input"><option value="" disabled>Selecione</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></select></label>
+              <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Produto <span class="font-normal text-slate-400">(opcional)</span></span><select v-model="form.productId" :disabled="!form.categoryId" class="field-input"><option value="">Definir posteriormente</option><option v-for="product in availableProducts" :key="product.id" :value="String(product.id)">{{ product.name }}</option></select></label>
+            </div>
+          </section>
+          <div v-if="productFieldSections.length" class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <section v-for="section in productFieldSections" :key="section.title" class="space-y-3">
+              <h4 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{{ section.title }}</h4>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+              </div>
+            </section>
+          </div>
+          <section class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <div><h3 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Dados do negócio</h3><p class="mt-1 text-xs text-slate-500">Informações comerciais, valores e observações.</p></div>
           <div class="grid gap-4 sm:grid-cols-2">
-            <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Categoria *</span><select v-model="form.categoryId" required :disabled="!form.funnelId" class="field-input"><option value="" disabled>Selecione</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></select></label>
-            <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Produto <span class="font-normal text-slate-400">(opcional)</span></span><select v-model="form.productId" :disabled="!form.categoryId" class="field-input"><option value="">Definir posteriormente</option><option v-for="product in availableProducts" :key="product.id" :value="String(product.id)">{{ product.name }}</option></select></label>
-            <BusinessCustomFieldInput v-for="field in businessFields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
             <label class="space-y-1.5 sm:col-span-2"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Observações</span><textarea v-model="form.notes" rows="3" class="field-input" /></label>
             <label class="space-y-1.5 sm:col-span-2"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Valor do negócio</span><input :value="businessValueDisplay" :disabled="configuredBusinessValue !== null" inputmode="numeric" class="field-input disabled:bg-slate-100 disabled:text-slate-500 dark:disabled:bg-slate-800" @input="updateValue" /><span v-if="configuredBusinessValue !== null" class="text-[11px] text-slate-400">Preenchido automaticamente pelo campo monetário configurado.</span></label>
+          </div>
+          </section>
+          <div v-if="businessFieldSections.length" class="space-y-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+            <section v-for="section in businessFieldSections" :key="section.title" class="space-y-3">
+              <h4 class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{{ section.title }}</h4>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <BusinessCustomFieldInput v-for="field in section.fields" :key="field.id" v-model="customValues[field.id]" :field="field" :class="wideField(field) ? 'sm:col-span-2' : ''" />
+              </div>
+            </section>
           </div>
         </section>
 
         <footer class="flex items-center justify-between gap-3 border-t border-slate-100 pt-5 dark:border-slate-800">
-          <button v-if="step === 2" type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="step = 1"><Icon name="mdi:arrow-left" class="mr-1" />Voltar</button>
+          <button v-if="activeStepIndex > 0" type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="activeStepIndex--"><Icon name="mdi:arrow-left" class="mr-1" />Voltar</button>
           <span v-else />
           <div class="flex gap-3">
             <button type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300" @click="close">Cancelar</button>
-            <button type="submit" :disabled="saving || (step === 2 && !canSubmit)" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50">
-              <Icon v-if="saving" name="mdi:loading" class="animate-spin" />{{ saving ? 'Criando...' : step === 1 ? 'Continuar' : 'Criar negócio' }}<Icon v-if="!saving && step === 1" name="mdi:arrow-right" />
+            <button type="submit" :disabled="saving || (isLastStep && !canSubmit)" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50">
+              <Icon v-if="saving" name="mdi:loading" class="animate-spin" />{{ saving ? 'Criando...' : isLastStep ? 'Criar negócio' : 'Continuar' }}<Icon v-if="!saving && !isLastStep" name="mdi:arrow-right" />
             </button>
           </div>
         </footer>
@@ -76,6 +102,7 @@ const { request } = useApi()
 const { user } = useAuth()
 const { funnels } = useFunnels()
 const { customFields } = useCustomFields()
+const { customFieldSections } = useCrmSettings()
 const { categories } = useCategories()
 const { products } = useProducts()
 const { leadSources, loadLeadSources } = useLeadSources()
@@ -83,9 +110,8 @@ const { users, loadUsers } = useUsers()
 const { refreshDeals } = useKanbanData()
 const toast = useToast()
 const saving = ref(false)
-const step = ref(1)
+const activeStepIndex = ref(0)
 const formElement = ref<HTMLFormElement | null>(null)
-const steps = [{ number: 1, label: 'Cliente' }, { number: 2, label: 'Produto e negócio' }]
 const customValues = reactive<Record<string, unknown>>({})
 const form = reactive({ fullname: '', clientType: 'individual', registration: '', phone: '', value: '', leadSourceId: '', notes: '', funnelId: '', categoryId: '', productId: '', userId: '' })
 
@@ -129,9 +155,36 @@ const conditionMatches = (field: CRMCustomField) => field.conditions.every(condi
   const included = condition.value.includes(selected)
   return condition.operator === 'equals' ? included : !included
 })
-const visibleFields = computed(() => customFields.value.filter(field => ['business', 'client'].includes(field.section) && conditionMatches(field)))
+const visibleFields = computed(() => customFields.value.filter(field => ['business', 'client', 'product'].includes(field.section) && conditionMatches(field)))
 const businessFields = computed(() => visibleFields.value.filter(field => field.section === 'business'))
 const clientFields = computed(() => visibleFields.value.filter(field => field.section === 'client'))
+const productFields = computed(() => visibleFields.value.filter(field => field.section === 'product'))
+const dealCustomDataFields = computed(() => [...productFields.value, ...businessFields.value])
+const defaultFormSection = (section: CRMCustomField['section']) => section === 'client' ? 'Dados complementares do cliente' : section === 'product' ? 'Dados complementares do produto' : 'Dados complementares do negócio'
+const groupFieldsByFormSection = (fields: CRMCustomField[]) => {
+  const sections = new Map<string, { title: string, order: number, fields: CRMCustomField[] }>()
+  fields.forEach(field => {
+    const configuredSection = customFieldSections.value.find(section => section.id === field.customFieldSectionId)
+    const title = configuredSection?.name || field.formSection || defaultFormSection(field.section)
+    const section = sections.get(title) || { title, order: field.formSectionOrder, fields: [] }
+    section.order = Math.min(section.order, configuredSection?.position ?? field.formSectionOrder)
+    section.fields.push(field)
+    sections.set(title, section)
+  })
+  return [...sections.values()]
+    .map(section => ({ ...section, fields: [...section.fields].sort((a, b) => a.position - b.position || a.label.localeCompare(b.label)) }))
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+}
+const businessFieldSections = computed(() => groupFieldsByFormSection(businessFields.value))
+const clientFieldSections = computed(() => groupFieldsByFormSection(clientFields.value))
+const productFieldSections = computed(() => groupFieldsByFormSection(productFields.value))
+const wizardSteps = computed(() => [
+  { key: 'client', kind: 'client', label: 'Cliente', fields: [] as CRMCustomField[] },
+  ...clientFieldSections.value.map(section => ({ key: `client-section-${section.title}`, kind: 'client-section', label: section.title, fields: section.fields })),
+  { key: 'deal', kind: 'deal', label: 'Produto e negócio', fields: [] as CRMCustomField[] }
+])
+const activeStep = computed(() => wizardSteps.value[Math.min(activeStepIndex.value, wizardSteps.value.length - 1)] || wizardSteps.value[0])
+const isLastStep = computed(() => activeStepIndex.value === wizardSteps.value.length - 1)
 const configuredBusinessValue = computed(() => {
   const field = visibleFields.value.find(item => item.type === 'currency' && item.isBusinessValue)
   if (!field) return null
@@ -188,14 +241,14 @@ const serializeCustomFields = (fields: CRMCustomField[]) => Object.fromEntries(f
 }))
 
 const reset = () => {
-  step.value = 1
+  activeStepIndex.value = 0
   Object.assign(form, { fullname: '', clientType: 'individual', registration: '', phone: '', value: '', leadSourceId: '', notes: '', funnelId: '', categoryId: '', productId: '', userId: String(user.value?.id || '') })
   Object.keys(customValues).forEach(key => delete customValues[key])
 }
 const close = () => { if (!saving.value) { reset(); emit('close') } }
 const advanceOrSubmit = () => {
-  if (step.value === 1) {
-    if (formElement.value?.reportValidity()) step.value = 2
+  if (!isLastStep.value) {
+    if (formElement.value?.reportValidity()) activeStepIndex.value++
     return
   }
   void submit()
@@ -218,7 +271,7 @@ const submit = async () => {
       product_id: form.productId ? Number(form.productId) : null, funnel_id: Number(form.funnelId), stage_id: Number(selectedStageId.value),
       lead_source_id: form.leadSourceId ? Number(form.leadSourceId) : null,
       value: configuredBusinessValue.value ?? parseCurrency(form.value), notes: form.notes.trim() || null,
-      custom_data: { custom_fields: serializeCustomFields(businessFields.value) }
+      custom_data: { custom_fields: serializeCustomFields(dealCustomDataFields.value) }
     } })
     await refreshDeals()
     toast.success('Negócio criado na primeira fase do funil.')

@@ -4,6 +4,9 @@ interface ApiCustomField {
   id: number
   label: string
   section: CRMCustomField['section']
+  custom_field_section_id?: number | null
+  form_section?: string | null
+  form_section_order?: number | null
   type: CRMCustomField['type']
   required: boolean
   default_value?: boolean | null
@@ -12,12 +15,16 @@ interface ApiCustomField {
   conditions?: Array<Omit<CRMCustomField['conditions'][number], 'value'> & { value: string | string[] }>
   options?: string[]
   sub_fields?: CRMCustomField['subFields']
+  position?: number | null
 }
 
 const mapCustomField = (item: ApiCustomField): CRMCustomField => ({
   id: String(item.id),
   label: item.label,
   section: item.section,
+  customFieldSectionId: item.custom_field_section_id ? String(item.custom_field_section_id) : null,
+  formSection: item.form_section || null,
+  formSectionOrder: item.form_section_order ?? 0,
   type: item.type,
   required: item.required,
   defaultValue: item.default_value ?? null,
@@ -28,7 +35,8 @@ const mapCustomField = (item: ApiCustomField): CRMCustomField => ({
     value: Array.isArray(condition.value) ? condition.value.map(String) : [String(condition.value)]
   })),
   options: item.options || [],
-  subFields: item.sub_fields || []
+  subFields: item.sub_fields || [],
+  position: item.position ?? 0
 })
 
 /** Loads custom fields without fetching unrelated administration resources. */
