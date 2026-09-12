@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import type { H3Event, MultiPartData } from 'h3'
 
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
@@ -6,6 +6,7 @@ interface ProxyOptions {
   /** Disable for global routes such as authentication and instance management. */
   tenantAware?: boolean
   binary?: boolean
+  multipartFileName?: (part: MultiPartData, fields: Record<string, string>) => string | null | undefined
 }
 
 /**
@@ -52,13 +53,20 @@ export const proxyToLaravel = async (event: H3Event, options: ProxyOptions = {})
     if (contentType.includes('multipart/form-data')) {
       const multipartBody = new FormData()
       const parts = await readMultipartFormData(event) || []
+      const fields: Record<string, string> = {}
+
+      for (const part of parts) {
+        if (!part.name || part.filename) continue
+        fields[part.name] = part.data.toString()
+      }
 
       for (const part of parts) {
         if (!part.name) continue
         if (part.filename) {
-          multipartBody.append(part.name, new Blob([part.data], { type: part.type }), part.filename)
+          const fileName = options.multipartFileName?.(part, fields) || part.filename
+          multipartBody.append(part.name, new Blob([part.data], { type: part.type }), fileName)
         } else {
-          multipartBody.append(part.name, part.data.toString())
+          multipartBody.append(part.name, fields[part.name] ?? part.data.toString())
         }
       }
 
