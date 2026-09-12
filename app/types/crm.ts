@@ -62,6 +62,8 @@ export interface DealConversationMessage {
 export interface CRMDocument {
   id: number
   title: string
+  type: string
+  objectId: number | string
   fileName: string
   fileUrl: string
   downloadUrl: string

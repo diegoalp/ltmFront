@@ -7,6 +7,14 @@ type DocumentOwnerType = 'business'
 const unwrapResource = (response: ApiDocument | ApiResourceResponse<ApiDocument>): ApiDocument =>
   'data' in response ? response.data : response
 
+const getDocumentOpenUrl = (document: ApiDocument) =>
+  document.file_url || document.url || document.download_url || buildDocumentDownloadUrl({
+    id: document.id,
+    objectId: document.object_id,
+    title: document.title,
+    type: document.type
+  })
+
 const mapDocument = (document: ApiDocument): CRMDocument => {
   const downloadUrl = buildDocumentDownloadUrl({
     id: document.id,
@@ -18,6 +26,8 @@ const mapDocument = (document: ApiDocument): CRMDocument => {
   return {
     id: document.id,
     title: document.title,
+    type: document.type,
+    objectId: document.object_id,
     fileName: document.original_name || document.file.split('/').pop() || document.title,
     fileUrl: downloadUrl,
     downloadUrl,
@@ -53,5 +63,17 @@ export const useDocuments = () => {
 
   const removeDocument = (id: number) => request(`/documents/${id}`, { method: 'DELETE' })
 
-  return { listDocuments, uploadDocument, removeDocument }
+  const getDocumentUrl = async (document: CRMDocument) => {
+    const query = new URLSearchParams({
+      document_name: document.title,
+      id: String(document.objectId),
+      object_id: String(document.objectId),
+      title: document.title,
+      type: document.type
+    })
+    const response = await request<ApiDocument | ApiResourceResponse<ApiDocument>>(`/documents/${document.id}/url?${query}`)
+    return getDocumentOpenUrl(unwrapResource(response))
+  }
+
+  return { listDocuments, uploadDocument, removeDocument, getDocumentUrl }
 }

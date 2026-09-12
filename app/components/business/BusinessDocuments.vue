@@ -50,13 +50,13 @@
       <p v-else-if="!documents.length" class="py-4 text-center text-xs text-slate-400">Nenhum documento enviado.</p>
       <div v-else class="space-y-2">
         <div v-for="document in documents" :key="document.id" class="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 dark:border-slate-800/60 dark:bg-slate-950">
-          <a :href="document.downloadUrl" target="_blank" rel="noopener noreferrer" class="flex min-w-0 flex-1 items-center gap-2" :title="`Abrir ${document.title}`">
-            <Icon :name="document.mimeType === 'application/pdf' ? 'mdi:file-pdf-box' : 'mdi:file-image-outline'" class="flex-shrink-0 text-slate-400" size="18" />
+          <button type="button" :disabled="openingId === document.id" class="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-wait disabled:opacity-60" :title="`Abrir ${document.title}`" @click="openDocument(document)">
+            <Icon :name="openingId === document.id ? 'mdi:loading' : document.mimeType === 'application/pdf' ? 'mdi:file-pdf-box' : 'mdi:file-image-outline'" class="flex-shrink-0 text-slate-400" size="18" :class="{ 'animate-spin': openingId === document.id }" />
             <span class="min-w-0">
               <span class="block truncate text-xs font-semibold text-slate-700 dark:text-slate-300">{{ document.title }}</span>
               <span class="block truncate text-[10px] text-slate-400">{{ document.fileName }}</span>
             </span>
-          </a>
+          </button>
           <button type="button" :disabled="deletingId === document.id" class="rounded-lg p-1.5 text-rose-500 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950/30" :aria-label="`Excluir ${document.title}`" @click="confirmRemoval(document)">
             <Icon :name="deletingId === document.id ? 'mdi:loading' : 'mdi:delete-outline'" size="17" :class="{ 'animate-spin': deletingId === document.id }" />
           </button>
@@ -70,7 +70,7 @@
 import type { CRMDocument } from '~/types/crm'
 
 const props = defineProps<{ businessId: number }>()
-const { listDocuments, uploadDocument, removeDocument } = useDocuments()
+const { listDocuments, uploadDocument, removeDocument, getDocumentUrl } = useDocuments()
 const toast = useToast()
 
 const documentTypeId = ref(0)
@@ -84,6 +84,7 @@ const isLoading = ref(true)
 const isUploading = ref(false)
 const isDragging = ref(false)
 const deletingId = ref<number | null>(null)
+const openingId = ref<number | null>(null)
 const canSubmit = computed(() => Boolean(selectedDocumentType.value && selectedFile.value))
 
 const loadDocuments = async () => {
@@ -135,6 +136,22 @@ const confirmRemoval = async (document: CRMDocument) => {
     toast.success('Documento excluído com sucesso.')
   } finally {
     deletingId.value = null
+  }
+}
+
+const openDocument = async (document: CRMDocument) => {
+  if (openingId.value) return
+  const target = window.open('', '_blank')
+  if (target) target.opener = null
+  openingId.value = document.id
+  try {
+    const url = await getDocumentUrl(document)
+    if (target) target.location.href = url
+    else window.open(url, '_blank', 'noopener,noreferrer')
+  } catch {
+    target?.close()
+  } finally {
+    openingId.value = null
   }
 }
 
