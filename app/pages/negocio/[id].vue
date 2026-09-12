@@ -347,7 +347,7 @@ const route = useRoute()
 const { user, isAuthenticated } = useAuth()
 const { request } = useApi()
 const toast = useToast()
-const { columns, findDealById, moveDeal, assignDealOwner, refreshDeals, dealsLoading } = useKanbanData()
+const { columns, findDealById, moveDeal, assignDealOwner, loadDealById, dealsLoading } = useKanbanData()
 const { categoryById } = useCategories()
 const { productById } = useProducts()
 const { customFields } = useCustomFields()
@@ -523,7 +523,7 @@ if (import.meta.client && !isAuthenticated.value) {
 const initialLoading = ref(true)
 onMounted(async () => {
   try {
-    if (!deal.value) await refreshDeals()
+    if (!deal.value) await loadDealById(dealId.value)
     if (!users.value.length) await loadUsers()
   } finally {
     initialLoading.value = false
@@ -547,7 +547,7 @@ const changeStage = async (stage: DealStage | string) => {
   if (String(deal.value.funnelStageId || deal.value.stage) === String(stage)) return
 
   await moveDeal(deal.value.id, stage)
-  await refreshDeals()
+  await loadDealById(deal.value.id)
 }
 
 const assignOwner = async () => {
@@ -575,14 +575,14 @@ const confirmWinDeal = async () => {
   if (!deal.value || !isCurrentStageFinal.value) return
   if (!await toast.confirm('O negócio será marcado como ganho.', { title: 'Ganhar negócio?', confirmLabel: 'Confirmar ganho' })) return
   await request(`/businesses/${deal.value.id}`, { method: 'PATCH', body: { status: 2, loss_reason: null } })
-  await refreshDeals()
+  await loadDealById(deal.value.id)
 }
 
 const confirmLoseDeal = async () => {
   if (!deal.value || !selectedLossReason.value) return
 
   await request(`/businesses/${deal.value.id}`, { method: 'PATCH', body: { loss_reason: selectedLossReason.value, status: 0 } })
-  await refreshDeals()
+  await loadDealById(deal.value.id)
   showLossModal.value = false
 }
 // Calculate age dynamically from the customer's birth date.

@@ -269,7 +269,7 @@ const submit = async () => {
       value: configuredBusinessValue.value ?? parseCurrency(form.value), notes: form.notes.trim() || null,
       custom_data: { custom_fields: serializeCustomFields(dealCustomDataFields.value) }
     } })
-    await refreshDeals()
+    await refreshDeals({ funnelId: form.funnelId, stageIds: selectedStageId.value ? [String(selectedStageId.value)] : [] })
     toast.success('Negócio criado na primeira fase do funil.')
     reset(); emit('created'); emit('close')
   } catch {

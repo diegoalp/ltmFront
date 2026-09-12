@@ -267,7 +267,7 @@ const submit = async () => {
       notes: form.notes.trim() || null,
       custom_data: { custom_fields: serializeCustomFields(dealCustomDataFields.value) }
     } })
-    await refreshDeals()
+    await refreshDeals({ funnelId: props.deal.funnelId, stageIds: props.deal.funnelStageId ? [props.deal.funnelStageId] : [] })
     toast.success('Negócio atualizado com sucesso.')
     emit('saved')
     emit('close')

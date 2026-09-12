@@ -19,7 +19,11 @@
           :key="column.id"
           :column="column"
           :cards="boardCardsByColumn[String(column.id)] ?? []"
+          :loading="columnState(column.id).loading"
+          :has-more="columnState(column.id).hasMore"
+          :total="columnState(column.id).total"
           @move-card="handleMoveCard"
+          @load-more="handleLoadMore"
         />
       </div>
     </div>
@@ -32,18 +36,21 @@ import type { DealCard, KanbanColumn } from '~/types/crm'
 const props = withDefaults(defineProps<{
   columns?: KanbanColumn[]
   cardsByColumn?: Record<string, DealCard[]>
+  columnStates?: Record<string, { loading: boolean, hasMore: boolean, total: number }>
   total?: number
 }>(), {
   columns: undefined,
   cardsByColumn: undefined,
+  columnStates: undefined,
   total: undefined
 })
 
 const emit = defineEmits<{
   (event: 'move-card', cardId: number, stage: KanbanColumn['id']): void
+  (event: 'load-more', stage: KanbanColumn['id']): void
 }>()
 
-const { columns, cardsByColumn, totalPipeline, moveDeal } = useKanbanData()
+const { columns, cardsByColumn, totalPipeline, moveDeal, stagePageState, stageHasMore, loadNextStagePage } = useKanbanData()
 
 const boardColumns = computed(() => props.columns ?? columns.value)
 
@@ -69,5 +76,26 @@ const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   }
 
   moveDeal(cardId, stage as 1 | 2 | 3 | 4 | 5 | 6)
+}
+
+const columnState = (stage: KanbanColumn['id']) => {
+  const key = String(stage)
+  if (props.columnStates?.[key]) return props.columnStates[key]
+  const state = stagePageState(stage)
+  return {
+    loading: state.loading,
+    hasMore: stageHasMore(stage),
+    total: state.loaded ? state.total : (boardCardsByColumn.value[key]?.length ?? 0)
+  }
+}
+
+const handleLoadMore = (stage: KanbanColumn['id']) => {
+  emit('load-more', stage)
+
+  if (props.columns) {
+    return
+  }
+
+  void loadNextStagePage(stage)
 }
 </script>

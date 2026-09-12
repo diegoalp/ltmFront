@@ -89,8 +89,10 @@
   <KanbanBoard
     :columns="selectedColumns"
     :cards-by-column="selectedCardsByColumn"
+    :column-states="selectedColumnStates"
     :total="selectedTotal"
     @move-card="handleMoveCard"
+    @load-more="handleLoadMore"
   />
   <NewBusinessModal :open="newBusinessOpen && !hasExpiredDeals" :initial-funnel-id="selectedFunnelId" @close="newBusinessOpen = false" />
 </template>
@@ -103,7 +105,7 @@ import type { DealCard, KanbanColumn } from '~/types/crm'
 const { user, isAuthenticated } = useAuth()
 const { instanceId } = useApi()
 const { funnels, funnelsLoading: settingsLoading, funnelsError: settingsError } = useFunnels()
-const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, dealsLoading } = useKanbanData()
+const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, loadNextStagePage, stagePageState, stageHasMore } = useKanbanData()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
 type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
@@ -126,10 +128,21 @@ const selectedFunnelId = ref(assignedFunnelId.value || persistedFunnelId.value |
 const selectionReady = ref(false)
 const selectedFunnel = computed(() => availableFunnels.value.find((funnel) => funnel.id === selectedFunnelId.value))
 const selectedColumns = computed(() => funnelColumns(selectedFunnelId.value))
+const selectedStageIds = computed(() => selectedColumns.value.map(column => String(column.id)))
 const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value))
 const selectedTotal = computed(() => selectedDeals.value.reduce((sum, card) => sum + card.value, 0))
 const selectedCardsByColumn = computed(() => Object.fromEntries(
   selectedColumns.value.map(column => [String(column.id), selectedDeals.value.filter(card => card.funnelStageId === String(column.id))])
+))
+const selectedColumnStates = computed(() => Object.fromEntries(
+  selectedColumns.value.map(column => {
+    const state = stagePageState(column.id)
+    return [String(column.id), {
+      loading: state.loading,
+      hasMore: stageHasMore(column.id),
+      total: state.loaded ? state.total : (selectedCardsByColumn.value[String(column.id)]?.length ?? 0)
+    }]
+  })
 ))
 
 const totalFormatted = computed(() => {
@@ -151,18 +164,34 @@ watch(selectedFunnelId, (value) => {
   if (selectionReady.value && canChooseFunnel.value) persistedFunnelId.value = value || null
 }, { flush: 'sync' })
 
-onMounted(() => {
-  if (instanceId.value && !dealsLoading.value) void refreshDeals({ status: statusFilter.value })
-})
+const refreshSelectedFunnel = async () => {
+  if (!selectionReady.value || !instanceId.value || !selectedFunnelId.value || !selectedStageIds.value.length) return
+  await refreshDeals({
+    funnelId: selectedFunnelId.value,
+    stageIds: selectedStageIds.value,
+    status: statusFilter.value
+  })
+}
+
+watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter], () => {
+  void refreshSelectedFunnel()
+}, { immediate: true })
 
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   if (!selectedFunnelId.value) return
   moveDealInFunnel(cardId, selectedFunnelId.value, String(stage))
 }
 
-const toggleStatusFilter = async (status: StatusFilter) => {
+const handleLoadMore = (stage: KanbanColumn['id']) => {
+  if (!selectedFunnelId.value) return
+  void loadNextStagePage(stage, {
+    funnelId: selectedFunnelId.value,
+    status: statusFilter.value
+  })
+}
+
+const toggleStatusFilter = (status: StatusFilter) => {
   statusFilter.value = statusFilter.value === status ? null : status
-  await refreshDeals({ status: statusFilter.value })
 }
 
 if (import.meta.client && !isAuthenticated.value) {

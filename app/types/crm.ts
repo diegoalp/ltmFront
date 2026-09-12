@@ -79,6 +79,7 @@ export interface CRMActivity { id: number, title: string, description: string, s
 export interface KanbanColumn {
   id: DealStage | string
   title: string
+  color?: string | null
   isFinal?: boolean
 }
 
