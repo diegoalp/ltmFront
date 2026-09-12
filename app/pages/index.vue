@@ -9,6 +9,28 @@
     </div>
 
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-label="Filtrar negócios por status">
+        <button
+          type="button"
+          class="status-filter-button"
+          :class="statusFilter === 'won' ? 'status-filter-button--won-active' : 'status-filter-button--inactive'"
+          :aria-pressed="statusFilter === 'won'"
+          @click="toggleStatusFilter('won')"
+        >
+          <Icon name="mdi:trophy-outline" size="17" />
+          Ganhos
+        </button>
+        <button
+          type="button"
+          class="status-filter-button"
+          :class="statusFilter === 'lost' ? 'status-filter-button--lost-active' : 'status-filter-button--inactive'"
+          :aria-pressed="statusFilter === 'lost'"
+          @click="toggleStatusFilter('lost')"
+        >
+          <Icon name="mdi:close-circle-outline" size="17" />
+          Perdidos
+        </button>
+      </div>
       <button type="button" :disabled="!availableFunnels.length || hasExpiredDeals" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50" @click="newBusinessOpen = true"><Icon name="mdi:plus" size="18" />Novo negócio</button>
       <label v-if="canChooseFunnel" class="sr-only" for="funnel-selector">Selecionar funil</label>
       <select
@@ -76,14 +98,16 @@
 <script setup lang="ts">
 import KanbanBoard from '~/components/kanban/KanbanBoard.vue'
 import NewBusinessModal from '~/components/business/NewBusinessModal.vue'
-import type { KanbanColumn } from '~/types/crm'
+import type { DealCard, KanbanColumn } from '~/types/crm'
 
 const { user, isAuthenticated } = useAuth()
 const { instanceId } = useApi()
 const { funnels, funnelsLoading: settingsLoading, funnelsError: settingsError } = useFunnels()
-const { funnelColumns, dealsByFunnel, totalByFunnel, cardsByFunnelColumn, moveDealInFunnel, refreshDeals, dealsLoading } = useKanbanData()
+const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, dealsLoading } = useKanbanData()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
+type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
+const statusFilter = ref<StatusFilter | null>(null)
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const assignedFunnelId = computed(() => user.value?.funnelId == null ? '' : String(user.value.funnelId))
@@ -103,8 +127,10 @@ const selectionReady = ref(false)
 const selectedFunnel = computed(() => availableFunnels.value.find((funnel) => funnel.id === selectedFunnelId.value))
 const selectedColumns = computed(() => funnelColumns(selectedFunnelId.value))
 const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value))
-const selectedTotal = computed(() => totalByFunnel(selectedFunnelId.value))
-const selectedCardsByColumn = computed(() => cardsByFunnelColumn(selectedFunnelId.value))
+const selectedTotal = computed(() => selectedDeals.value.reduce((sum, card) => sum + card.value, 0))
+const selectedCardsByColumn = computed(() => Object.fromEntries(
+  selectedColumns.value.map(column => [String(column.id), selectedDeals.value.filter(card => card.funnelStageId === String(column.id))])
+))
 
 const totalFormatted = computed(() => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(selectedTotal.value)
@@ -126,7 +152,7 @@ watch(selectedFunnelId, (value) => {
 }, { flush: 'sync' })
 
 onMounted(() => {
-  if (instanceId.value && !dealsLoading.value) void refreshDeals()
+  if (instanceId.value && !dealsLoading.value) void refreshDeals({ status: statusFilter.value })
 })
 
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
@@ -134,8 +160,28 @@ const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   moveDealInFunnel(cardId, selectedFunnelId.value, String(stage))
 }
 
+const toggleStatusFilter = async (status: StatusFilter) => {
+  statusFilter.value = statusFilter.value === status ? null : status
+  await refreshDeals({ status: statusFilter.value })
+}
+
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')
 }
 
 </script>
+
+<style scoped>
+.status-filter-button {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition;
+}
+.status-filter-button--inactive {
+  @apply bg-transparent text-slate-400 opacity-60 hover:bg-slate-100 hover:text-slate-600 hover:opacity-100 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300;
+}
+.status-filter-button--won-active {
+  @apply bg-emerald-600 text-white opacity-100 shadow-sm shadow-emerald-600/25;
+}
+.status-filter-button--lost-active {
+  @apply bg-rose-600 text-white opacity-100 shadow-sm shadow-rose-600/25;
+}
+</style>

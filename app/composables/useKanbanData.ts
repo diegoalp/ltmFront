@@ -32,13 +32,18 @@ export const useKanbanData = () => {
   const dealsError = useState<string | null>('kanban-deals-error', () => null)
   const loaded = useState('kanban-deals-loaded', () => false)
 
+  type DealsFilter = { status?: 'won' | 'lost' | null }
+  const statusQueryValue = (status: DealsFilter['status']) => status === 'won' ? 2 : status === 'lost' ? 0 : null
+
   /** Reloads deals and keeps any error available for the page. */
-  const refreshDeals = async () => {
+  const refreshDeals = async (filters: DealsFilter = {}) => {
     dealsLoading.value = true
     dealsError.value = null
     const requestedInstance = instanceId.value
+    const status = statusQueryValue(filters.status)
+    const path = status == null ? '/businesses' : `/businesses?status=${status}`
     try {
-      const items = (await fetchAll<ApiBusiness>('/businesses')).map(mapBusiness)
+      const items = (await fetchAll<ApiBusiness>(path)).map(mapBusiness)
       if (instanceId.value !== requestedInstance) return
       deals.value = items
       loaded.value = true

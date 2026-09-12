@@ -56,13 +56,11 @@ const complete = async (id: number) => {
   try { await completeActivity(id) } catch { /* useApi displays the error. */ }
   finally { busy.value = null }
 }
-let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
   void refresh()
-  timer = setInterval(refresh, 60000)
   window.addEventListener('focus', refresh)
 })
-onUnmounted(() => { clearInterval(timer); window.removeEventListener('focus', refresh) })
+onUnmounted(() => { window.removeEventListener('focus', refresh) })
 watch(() => [session.instanceId, session.user?.id], () => {
   todayActivities.value = []
   open.value = false
