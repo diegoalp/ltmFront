@@ -67,10 +67,10 @@
             <button
               type="button"
               class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-              @click="showEditModal = true"
+              @click="openEdit({ type: 'deal-core', title: 'produto e negócio' })"
             >
               <Icon name="mdi:pencil-outline" size="16" />
-              Editar
+              Editar produto
             </button>
             <button
               v-if="isCurrentStageFinal && !isDealLost && !isDealWon"
@@ -104,7 +104,12 @@
           
           <div class="lg:col-span-1 xl:col-span-1 space-y-6">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">Dados do Cliente</h3>
+              <div class="mb-4 flex items-center justify-between gap-3">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dados do Cliente</h3>
+                <button type="button" class="edit-card-button" title="Editar dados do cliente" @click="openEdit({ type: 'client-core', title: 'dados do cliente' })">
+                  <Icon name="mdi:pencil-outline" size="16" />
+                </button>
+              </div>
               
               <div class="space-y-4">
                 <div v-if="hasClientValue(deal.document) || hasClientValue(deal.profession)" class="grid grid-cols-1 gap-4">
@@ -171,7 +176,12 @@
             </div>
 
             <div v-for="section in clientDetailSections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
+              <div class="mb-4 flex items-center justify-between gap-3">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
+                <button type="button" class="edit-card-button" :title="`Editar ${section.title}`" @click="openEdit({ type: 'client-custom-section', title: section.title, fieldIds: section.fields.map(field => field.id) })">
+                  <Icon name="mdi:pencil-outline" size="16" />
+                </button>
+              </div>
               <div class="grid gap-4">
                 <div v-for="field in section.fields" :key="field.id" class="field-pair">
                   <span class="field-name">{{ field.label }}</span>
@@ -185,6 +195,9 @@
             <div v-for="section in businessDisplaySections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div class="mb-4 flex items-center justify-between">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
+                <button v-if="section.fields.length" type="button" class="edit-card-button" :title="`Editar ${section.title}`" @click="openEdit({ type: 'business-custom-section', title: section.title, fieldIds: section.fields.map(field => field.id) })">
+                  <Icon name="mdi:pencil-outline" size="16" />
+                </button>
               </div>
               <div v-if="section.fields.length" class="grid gap-4 sm:grid-cols-2">
                 <div v-for="field in section.fields" :key="field.id" class="field-pair rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
@@ -202,6 +215,11 @@
 
                   <div v-if="groupFieldRows(field).length" class="grid gap-3">
                     <div v-for="(row, rowIndex) in groupFieldRows(field)" :key="rowIndex" class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                      <div class="mb-3 flex justify-end">
+                        <button type="button" class="edit-card-button" :title="`Editar ${field.label}`" @click="openEdit({ type: 'group-row', title: `${field.label} #${rowIndex + 1}`, groupFieldId: field.id, rowIndex })">
+                          <Icon name="mdi:pencil-outline" size="16" />
+                        </button>
+                      </div>
                       <div class="grid gap-3 sm:grid-cols-2">
                         <div v-for="subField in field.subFields.filter(sub => hasCustomFieldValue(row[sub.key]))" :key="subField.key" class="field-pair">
                           <span class="field-name">{{ subField.label }}</span>
@@ -246,7 +264,12 @@
 
           <div class="lg:col-span-3 xl:col-span-1 space-y-6">
             <div v-if="hasClientValue(deal.phone)" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Contatos</h3>
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Contatos</h3>
+                <button type="button" class="edit-card-button" title="Editar contatos" @click="openEdit({ type: 'client-core', title: 'contatos' })">
+                  <Icon name="mdi:pencil-outline" size="16" />
+                </button>
+              </div>
               
               <div class="space-y-2">
                 <div v-for="(phone, index) in [ { number: deal.phone, isValidated: true, isWhatsapp: true } ]" :key="index" class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 px-3 py-2 rounded-xl text-sm">
@@ -292,8 +315,9 @@
     <BusinessEditBusinessModal
       :open="showEditModal"
       :deal="deal || null"
-      @close="showEditModal = false"
-      @saved="showEditModal = false"
+      :target="editTarget"
+      @close="closeEdit"
+      @saved="closeEdit"
     />
 
     <div v-if="showLossModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
@@ -514,7 +538,24 @@ const productTextColor = (hex: string) => {
 const lossReasons = ['Preço acima do esperado', 'Cliente desistiu', 'Não houve retorno', 'Produto não atende', 'Concorrência venceu', 'Outros']
 const showLossModal = ref(false)
 const showEditModal = ref(false)
+type BusinessEditTarget = {
+  type: 'client-core' | 'deal-core' | 'client-custom-section' | 'business-custom-section' | 'group-row'
+  title?: string
+  fieldIds?: string[]
+  groupFieldId?: string
+  rowIndex?: number
+}
+const editTarget = ref<BusinessEditTarget | null>(null)
 const selectedLossReason = ref('')
+
+const openEdit = (target: BusinessEditTarget) => {
+  editTarget.value = target
+  showEditModal.value = true
+}
+const closeEdit = () => {
+  showEditModal.value = false
+  editTarget.value = null
+}
 
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')
@@ -616,6 +657,9 @@ const customerAge = computed(() => {
 }
 .field-value {
   @apply block break-words text-sm font-semibold;
+}
+.edit-card-button {
+  @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:border-slate-800 dark:hover:bg-indigo-950 dark:hover:text-indigo-300;
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

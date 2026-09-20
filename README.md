@@ -39,6 +39,22 @@ npm run generate  # static generation
 npm run preview   # preview the production build
 ```
 
+## Spec-Driven Development
+
+This project keeps feature specs in `specs/` and reusable templates in
+`.specify/templates/`.
+
+For meaningful product changes:
+
+1. Create `specs/NNN-short-name/`.
+2. Copy `spec.md`, `plan.md`, `tasks.md`, and `checklist.md` from the templates.
+3. Complete the spec and acceptance criteria before editing application code.
+4. Use the plan to document impacted files, API contracts, tenant behavior, and
+   verification steps.
+5. Track implementation through `tasks.md`.
+
+The project constitution lives in `.specify/memory/constitution.md`.
+
 ## Conventions
 
 - Use `<script setup lang="ts">` in Vue components.

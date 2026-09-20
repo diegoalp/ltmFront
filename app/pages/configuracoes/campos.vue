@@ -14,12 +14,32 @@
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="border-b border-slate-100 p-5 dark:border-slate-800">
-          <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Campos configurados</h2>
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Campos configurados</h2>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ selectedFieldSectionTab?.description || 'Visualize e organize os campos por seção da ficha.' }}</p>
+            </div>
+            <span class="inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ visibleCustomFields.length }} campo{{ visibleCustomFields.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="mt-5 flex gap-2 overflow-x-auto pb-1">
+            <button
+              v-for="tab in fieldSectionTabs"
+              :key="tab.key"
+              type="button"
+              class="flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-bold transition"
+              :class="activeFieldSectionKey === tab.key ? 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-300' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800'"
+              @click="activeFieldSectionKey = tab.key"
+            >
+              <span class="max-w-[180px] truncate">{{ tab.name }}</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px]" :class="activeFieldSectionKey === tab.key ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'">{{ tab.count }}</span>
+            </button>
+          </div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full min-w-[760px] text-left text-sm">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
               <tr>
+                <th class="w-10 px-5 py-3"></th>
                 <th class="px-5 py-3">Campo</th>
                 <th class="px-5 py-3">Cadastro</th>
                 <th class="px-5 py-3">Seção da ficha</th>
@@ -29,8 +49,25 @@
                 <th class="px-5 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-              <tr v-for="field in customFields" :key="field.id">
+            <Draggable
+              v-model="localVisibleCustomFields"
+              tag="tbody"
+              item-key="id"
+              handle=".field-drag-handle"
+              ghost-class="opacity-40"
+              drag-class="bg-indigo-50 dark:bg-indigo-950"
+              class="divide-y divide-slate-100 dark:divide-slate-800"
+              :animation="180"
+              :disabled="activeFieldSectionKey === 'all' || reorderingFields"
+              @end="persistFieldOrder"
+            >
+              <template #item="{ element: field }">
+              <tr>
+                <td class="px-5 py-4">
+                  <button type="button" class="field-drag-handle inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800" :disabled="activeFieldSectionKey === 'all' || reorderingFields" title="Arrastar para reordenar">
+                    <Icon name="mdi:drag" size="18" />
+                  </button>
+                </td>
                 <td class="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
                   {{ field.label }}
                   <span v-if="field.isBusinessValue" class="ml-1 inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">Valor do negócio</span>
@@ -49,7 +86,20 @@
                   </div>
                 </td>
               </tr>
-            </tbody>
+              </template>
+              <template #footer>
+              <tr v-if="!localVisibleCustomFields.length">
+                <td colspan="8" class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                  Nenhum campo nesta seção.
+                </td>
+              </tr>
+              <tr v-else-if="activeFieldSectionKey === 'all'">
+                <td colspan="8" class="bg-slate-50 px-5 py-3 text-xs font-semibold text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                  Selecione uma seção específica para arrastar e soltar os campos.
+                </td>
+              </tr>
+              </template>
+            </Draggable>
           </table>
         </div>
       </section>
@@ -69,19 +119,36 @@
               {{ savingSection ? 'Salvando...' : editingSectionId ? 'Salvar seção' : 'Adicionar seção' }}
             </button>
           </form>
-          <div class="mt-5 space-y-2">
-            <article v-for="section in sortedCustomFieldSections" :key="section.id" class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-950">
-              <div class="min-w-0">
+          <Draggable
+            v-model="localCustomFieldSections"
+            item-key="id"
+            handle=".section-drag-handle"
+            ghost-class="opacity-40"
+            drag-class="bg-indigo-50 dark:bg-indigo-950"
+            class="mt-5 space-y-2"
+            :animation="180"
+            :disabled="reorderingSections"
+            @end="persistSectionOrder"
+          >
+            <template #item="{ element: section }">
+            <article class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-950">
+              <button type="button" class="section-drag-handle shrink-0 cursor-grab rounded-md p-1.5 text-slate-300 hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing dark:hover:bg-slate-800" title="Arrastar seção">
+                <Icon name="mdi:drag" size="16" />
+              </button>
+              <button type="button" class="min-w-0 flex-1 text-left" @click="activeFieldSectionKey = `custom:${section.id}`">
                 <p class="truncate font-semibold text-slate-800 dark:text-slate-100">{{ section.name }}</p>
-                <p class="text-xs text-slate-500">{{ sectionLabels[section.section] }} · ordem {{ section.position }}</p>
-              </div>
+                <p class="text-xs text-slate-500">{{ sectionLabels[section.section] }} · ordem {{ section.position }} · {{ fieldCountForSection(`custom:${section.id}`) }} campo{{ fieldCountForSection(`custom:${section.id}`) === 1 ? '' : 's' }}</p>
+              </button>
               <div class="flex shrink-0 gap-1">
                 <button type="button" class="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950" title="Editar seção" @click="editFieldSection(section)"><Icon name="mdi:pencil-outline" size="16" /></button>
                 <button type="button" :disabled="removingSectionId === section.id" class="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950" title="Remover seção" @click="deleteFieldSection(section)"><Icon :name="removingSectionId === section.id ? 'mdi:loading' : 'mdi:trash-can-outline'" :class="{ 'animate-spin': removingSectionId === section.id }" size="16" /></button>
               </div>
             </article>
+            </template>
+            <template #footer>
             <p v-if="!customFieldSections.length" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-500 dark:border-slate-800">Nenhuma seção cadastrada.</p>
-          </div>
+            </template>
+          </Draggable>
         </section>
 
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -187,18 +254,25 @@
 </template>
 
 <script setup lang="ts">
+import Draggable from 'vuedraggable'
 import type { CRMCustomField, CRMCustomFieldCondition, CRMCustomFieldSection, CRMCustomFieldSectionConfig, CRMCustomFieldType, CRMCustomSubField } from '~/types/crm'
 
-const { customFields, customFieldSections, funnels, addCustomField, updateCustomField, removeCustomField, addCustomFieldSection, updateCustomFieldSection, removeCustomFieldSection } = useCrmSettings()
+const { customFields, customFieldSections, funnels, addCustomField, updateCustomField, removeCustomField, addCustomFieldSection, updateCustomFieldSection, removeCustomFieldSection, refreshSettings } = useCrmSettings()
+const { request } = useApi()
 const { categories } = useCategories()
 const { products } = useProducts()
 const toast = useToast()
 const saving = ref(false)
 const savingSection = ref(false)
+const reorderingFields = ref(false)
+const reorderingSections = ref(false)
 const editingId = ref<string | null>(null)
 const editingSectionId = ref<string | null>(null)
 const removingId = ref<string | null>(null)
 const removingSectionId = ref<string | null>(null)
+const activeFieldSectionKey = ref('all')
+const localVisibleCustomFields = ref<CRMCustomField[]>([])
+const localCustomFieldSections = ref<CRMCustomFieldSectionConfig[]>([])
 const sectionLabels: Record<CRMCustomFieldSection, string> = { business: 'Negócio', product: 'Produto', client: 'Cliente' }
 
 const form = reactive({
@@ -236,6 +310,7 @@ const resetForm = () => {
 }
 
 const editField = (field: CRMCustomField) => {
+  activeFieldSectionKey.value = fieldSectionKey(field)
   editingId.value = field.id
   form.label = field.label
   form.section = field.section
@@ -281,6 +356,106 @@ const fieldSectionOptions = computed(() => customFieldSections.value
   .filter(section => section.section === form.section)
   .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name)))
 const fieldSectionName = (field: CRMCustomField) => customFieldSections.value.find(section => section.id === field.customFieldSectionId)?.name || field.formSection || defaultFormSection(field.section)
+const fieldSectionKey = (field: CRMCustomField) => field.customFieldSectionId ? `custom:${field.customFieldSectionId}` : `default:${field.section}`
+const fieldCountForSection = (key: string) => key === 'all' ? customFields.value.length : customFields.value.filter(field => fieldSectionKey(field) === key).length
+const defaultSectionTabs = computed(() => {
+  const sections: CRMCustomFieldSection[] = ['business', 'product', 'client']
+  return sections
+    .map(section => ({
+      key: `default:${section}`,
+      name: defaultFormSection(section),
+      description: `${sectionLabels[section]} sem seção personalizada.`,
+      section,
+      order: -1,
+      count: fieldCountForSection(`default:${section}`)
+    }))
+    .filter(tab => tab.count > 0)
+})
+const configuredSectionTabs = computed(() => sortedCustomFieldSections.value.map(section => ({
+  key: `custom:${section.id}`,
+  name: section.name,
+  description: `${sectionLabels[section.section]} · ordem ${section.position}`,
+  section: section.section,
+  order: section.position,
+  count: fieldCountForSection(`custom:${section.id}`)
+})))
+const fieldSectionTabs = computed(() => [
+  { key: 'all', name: 'Todos os campos', description: 'Todos os campos configurados na ficha.', section: 'business' as CRMCustomFieldSection, order: -2, count: customFields.value.length },
+  ...[...defaultSectionTabs.value, ...configuredSectionTabs.value]
+    .sort((a, b) => a.section.localeCompare(b.section) || a.order - b.order || a.name.localeCompare(b.name))
+])
+const selectedFieldSectionTab = computed(() => fieldSectionTabs.value.find(tab => tab.key === activeFieldSectionKey.value))
+const visibleCustomFields = computed(() => {
+  const fields = activeFieldSectionKey.value === 'all'
+    ? customFields.value
+    : customFields.value.filter(field => fieldSectionKey(field) === activeFieldSectionKey.value)
+  return [...fields].sort((a, b) => {
+    if (activeFieldSectionKey.value === 'all') {
+      const sectionCompare = fieldSectionName(a).localeCompare(fieldSectionName(b))
+      if (sectionCompare !== 0) return sectionCompare
+    }
+    return a.position - b.position || a.label.localeCompare(b.label)
+  })
+})
+const refreshLocalFieldOrder = () => {
+  localVisibleCustomFields.value = [...visibleCustomFields.value]
+}
+const refreshLocalSectionOrder = () => {
+  localCustomFieldSections.value = [...sortedCustomFieldSections.value]
+}
+const customFieldPatchBody = (field: CRMCustomField) => ({
+  label: field.label,
+  section: field.section,
+  type: field.type,
+  required: field.required,
+  custom_field_section_id: field.customFieldSectionId ? Number(field.customFieldSectionId) : null,
+  default_value: field.type === 'checkbox' ? field.defaultValue : null,
+  is_business_value: field.type === 'currency' ? field.isBusinessValue : false,
+  visible_when: field.visibleWhen,
+  conditions: field.conditions,
+  options: field.type === 'select' ? field.options : null,
+  sub_fields: field.type === 'group' ? field.subFields : null,
+  position: field.position
+})
+const persistFieldOrder = async () => {
+  if (activeFieldSectionKey.value === 'all' || reorderingFields.value) return
+  const orderedFields = localVisibleCustomFields.value.map((field, position) => ({ ...field, position }))
+  const changedFields = orderedFields.filter(field => customFields.value.find(item => item.id === field.id)?.position !== field.position)
+  if (!changedFields.length) return
+
+  reorderingFields.value = true
+  try {
+    const temporaryBase = 1_000_000 + (Date.now() % 1_000_000)
+    await Promise.all(orderedFields.map((field, index) => request(`/custom-fields/${field.id}`, { method: 'PATCH', body: customFieldPatchBody({ ...field, position: temporaryBase + index }) })))
+    await Promise.all(orderedFields.map(field => request(`/custom-fields/${field.id}`, { method: 'PATCH', body: customFieldPatchBody(field) })))
+    await refreshSettings()
+    toast.success('Ordem dos campos atualizada.')
+  } catch {
+    refreshLocalFieldOrder()
+  } finally { reorderingFields.value = false }
+}
+const persistSectionOrder = async () => {
+  if (reorderingSections.value) return
+  const positionsBySection = new Map<CRMCustomFieldSection, number>()
+  const orderedSections = localCustomFieldSections.value.map(section => {
+    const position = positionsBySection.get(section.section) ?? 0
+    positionsBySection.set(section.section, position + 1)
+    return { ...section, position }
+  })
+  const changedSections = orderedSections.filter(section => customFieldSections.value.find(item => item.id === section.id)?.position !== section.position)
+  if (!changedSections.length) return
+
+  reorderingSections.value = true
+  try {
+    const temporaryBase = 1_000_000 + (Date.now() % 1_000_000)
+    await Promise.all(localCustomFieldSections.value.map((section, index) => request(`/custom-field-sections/${section.id}`, { method: 'PATCH', body: { name: section.name, section: section.section, position: temporaryBase + index } })))
+    await Promise.all(orderedSections.map(section => request(`/custom-field-sections/${section.id}`, { method: 'PATCH', body: { name: section.name, section: section.section, position: section.position } })))
+    await refreshSettings()
+    toast.success('Ordem das seções atualizada.')
+  } catch {
+    refreshLocalSectionOrder()
+  } finally { reorderingSections.value = false }
+}
 
 const resetSectionForm = () => {
   editingSectionId.value = null
@@ -338,6 +513,7 @@ const saveField = async () => {
     const payload = { ...form, customFieldSectionId: form.customFieldSectionId || null, formSection: null, formSectionOrder: 0, label: form.label.trim(), position: Number(form.position) || 0, defaultValue: form.type === 'checkbox' ? form.defaultValue ?? false : null, isBusinessValue: form.type === 'currency' ? form.isBusinessValue : false, options, subFields, conditions: form.conditions.map(item => ({ ...item, value: [...item.value] })), visibleWhen: form.conditions.length ? form.conditions.map(conditionLabel).join(' e ') : 'Sempre exibido' }
     if (editingId.value) await updateCustomField(editingId.value, payload)
     else await addCustomField(payload)
+    activeFieldSectionKey.value = payload.customFieldSectionId ? `custom:${payload.customFieldSectionId}` : `default:${payload.section}`
     toast.success(editingId.value ? 'Campo atualizado com sucesso.' : 'Campo personalizado adicionado com sucesso.')
     resetForm()
   } catch {
@@ -372,4 +548,10 @@ watch(() => form.section, section => {
 watch(() => form.type, type => {
   if (type !== 'currency') form.isBusinessValue = false
 })
+
+watch(fieldSectionTabs, tabs => {
+  if (!tabs.some(tab => tab.key === activeFieldSectionKey.value)) activeFieldSectionKey.value = 'all'
+})
+watch(visibleCustomFields, refreshLocalFieldOrder, { immediate: true })
+watch(sortedCustomFieldSections, refreshLocalSectionOrder, { immediate: true })
 </script>

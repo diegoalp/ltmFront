@@ -22,7 +22,14 @@
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Nome do cliente *</span><input v-model="form.fullname" required class="field-input" /></label>
             <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Tipo de pessoa *</span><select v-model="form.clientType" required class="field-input"><option value="individual">Pessoa física</option><option value="company">Pessoa jurídica</option></select></label>
-            <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ form.clientType === 'company' ? 'CNPJ' : 'CPF' }} *</span><input :value="form.registration" required :maxlength="form.clientType === 'company' ? 18 : 14" inputmode="numeric" class="field-input" @input="updateRegistration" /></label>
+            <label class="space-y-1.5">
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ form.clientType === 'company' ? 'CNPJ' : 'CPF' }} *</span>
+              <input :value="form.registration" required :maxlength="form.clientType === 'company' ? 18 : 14" inputmode="numeric" class="field-input" @input="updateRegistration" />
+              <span v-if="clientSearchLoading || clientSearchMessage" class="flex items-center gap-1 text-[11px]" :class="clientSearchLoading ? 'text-slate-400' : matchedClientId ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
+                <Icon v-if="clientSearchLoading" name="mdi:loading" class="animate-spin" size="13" />
+                {{ clientSearchLoading ? 'Buscando cliente...' : clientSearchMessage }}
+              </span>
+            </label>
             <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Telefone</span><input :value="form.phone" maxlength="15" inputmode="tel" class="field-input" @input="updatePhone" /></label>
             <label class="space-y-1.5"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Origem do lead</span><select v-model="form.leadSourceId" class="field-input"><option value="">Não informada</option><option v-for="source in leadSources" :key="source.id" :value="String(source.id)">{{ source.name }}</option></select></label>
             <label v-if="canAssignOwner" class="space-y-1.5">
@@ -95,10 +102,24 @@
 
 <script setup lang="ts">
 import type { CRMCustomField, CRMCustomFieldType } from '~/types/crm'
+import { extractCustomFields } from '~/utils/customFieldDisplay'
+
+interface ApiClientSearchResult {
+  id?: number
+  fullname?: string | null
+  name?: string | null
+  type?: 'individual' | 'company' | string | null
+  registration?: string | null
+  phones?: Array<{ number?: string | null, whatsapp?: boolean | null }>
+  phone?: string | null
+  extra?: Record<string, unknown> | string | null
+  customData?: Record<string, unknown> | string | null
+  custom_data?: Record<string, unknown> | string | null
+}
 
 const props = defineProps<{ open: boolean, initialFunnelId?: string }>()
 const emit = defineEmits<{ close: [], created: [] }>()
-const { request } = useApi()
+const { request, instanceId } = useApi()
 const { user } = useAuth()
 const { funnels } = useFunnels()
 const { customFields } = useCustomFields()
@@ -110,10 +131,16 @@ const { users, loadUsers } = useUsers()
 const { refreshDeals } = useKanbanData()
 const toast = useToast()
 const saving = ref(false)
+const clientSearchLoading = ref(false)
+const clientSearchMessage = ref('')
+const matchedClientId = ref<number | null>(null)
+const prefillingClient = ref(false)
 const activeStepIndex = ref(0)
 const formElement = ref<HTMLFormElement | null>(null)
 const customValues = reactive<Record<string, unknown>>({})
 const form = reactive({ fullname: '', clientType: 'individual', registration: '', phone: '', value: '', leadSourceId: '', notes: '', funnelId: '', categoryId: '', productId: '', userId: '' })
+let clientSearchTimer: ReturnType<typeof setTimeout> | null = null
+let clientSearchSequence = 0
 
 const onlyDigits = (value: string) => value.replace(/\D/g, '')
 const maskCpf = (value: string) => onlyDigits(value).slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
@@ -128,6 +155,49 @@ const parseCurrency = (value: unknown) => Number(String(value || '').replace(/[^
 const updateRegistration = (event: Event) => { form.registration = form.clientType === 'company' ? maskCnpj((event.target as HTMLInputElement).value) : maskCpf((event.target as HTMLInputElement).value) }
 const updatePhone = (event: Event) => { form.phone = maskPhone((event.target as HTMLInputElement).value) }
 const updateValue = (event: Event) => { if (configuredBusinessValue.value === null) form.value = currencyMask((event.target as HTMLInputElement).value) }
+const clientSearchLength = computed(() => form.clientType === 'company' ? 14 : 11)
+const normalizeClientSearchResult = (response: unknown): ApiClientSearchResult | null => {
+  if (Array.isArray(response)) return response[0] as ApiClientSearchResult | undefined || null
+  if (!response || typeof response !== 'object') return null
+  const record = response as Record<string, unknown>
+  if (Array.isArray(record.data)) return record.data[0] as ApiClientSearchResult | undefined || null
+  if (record.data && typeof record.data === 'object') return record.data as ApiClientSearchResult
+  return record as ApiClientSearchResult
+}
+const hydrateExistingClient = (client: ApiClientSearchResult, searchedDigits: string) => {
+  prefillingClient.value = true
+  matchedClientId.value = client.id ?? null
+  form.clientType = client.type === 'company' || searchedDigits.length > 11 ? 'company' : 'individual'
+  form.registration = form.clientType === 'company' ? maskCnpj(client.registration || searchedDigits) : maskCpf(client.registration || searchedDigits)
+  form.fullname = String(client.fullname || client.name || form.fullname || '').trim()
+  const phone = client.phones?.find(item => item?.number)?.number || client.phone || ''
+  if (phone) form.phone = maskPhone(phone)
+  Object.assign(customValues, extractCustomFields(client.extra), extractCustomFields(client.customData), extractCustomFields(client.custom_data))
+  clientSearchMessage.value = 'Cliente encontrado. Dados preenchidos automaticamente.'
+  nextTick(() => { prefillingClient.value = false })
+}
+const searchExistingClient = async (digits: string) => {
+  const sequence = ++clientSearchSequence
+  clientSearchLoading.value = true
+  clientSearchMessage.value = ''
+  matchedClientId.value = null
+  try {
+    const params = new URLSearchParams({ registration: digits })
+    if (instanceId.value) params.set('instance_id', String(instanceId.value))
+    const response = await request<unknown>(`/clients/search/by-registration?${params.toString()}`)
+    if (sequence !== clientSearchSequence || onlyDigits(form.registration) !== digits) return
+    const client = normalizeClientSearchResult(response)
+    if (!client) {
+      clientSearchMessage.value = ''
+      return
+    }
+    hydrateExistingClient(client, digits)
+  } catch {
+    if (sequence === clientSearchSequence) clientSearchMessage.value = ''
+  } finally {
+    if (sequence === clientSearchSequence) clientSearchLoading.value = false
+  }
+}
 
 const activeFunnels = computed(() => funnels.value.filter(item => item.active !== false && item.stages.length))
 const isAdministrator = computed(() => ['admin', 'master', 'mastr'].includes(String(user.value?.role || '').toLowerCase()))
@@ -166,8 +236,9 @@ const groupFieldsByFormSection = (fields: CRMCustomField[]) => {
   fields.forEach(field => {
     const configuredSection = customFieldSections.value.find(section => section.id === field.customFieldSectionId)
     const title = configuredSection?.name || field.formSection || defaultFormSection(field.section)
-    const section = sections.get(title) || { title, order: field.formSectionOrder, fields: [] }
-    section.order = Math.min(section.order, configuredSection?.position ?? field.formSectionOrder)
+    const order = configuredSection?.position ?? field.formSectionOrder
+    const section = sections.get(title) || { title, order, fields: [] }
+    section.order = Math.min(section.order, order)
     section.fields.push(field)
     sections.set(title, section)
   })
@@ -209,7 +280,18 @@ watch(assignableUsers, owners => {
   form.userId = currentOwner ? String(currentOwner.id) : ''
 }, { immediate: true })
 watch(() => form.categoryId, () => { form.productId = '' })
-watch(() => form.clientType, () => { form.registration = '' })
+watch(() => form.clientType, () => { if (!prefillingClient.value) form.registration = '' })
+watch(() => onlyDigits(form.registration), digits => {
+  matchedClientId.value = null
+  if (clientSearchTimer) clearTimeout(clientSearchTimer)
+  if (digits.length < clientSearchLength.value) {
+    clientSearchSequence++
+    clientSearchLoading.value = false
+    clientSearchMessage.value = ''
+    return
+  }
+  clientSearchTimer = setTimeout(() => { void searchExistingClient(digits) }, 450)
+})
 watch(visibleFields, fields => {
   const visibleIds = new Set(fields.map(field => field.id))
   Object.keys(customValues).forEach(id => { if (!visibleIds.has(id)) delete customValues[id] })
@@ -244,8 +326,17 @@ const reset = () => {
   activeStepIndex.value = 0
   Object.assign(form, { fullname: '', clientType: 'individual', registration: '', phone: '', value: '', leadSourceId: '', notes: '', funnelId: '', categoryId: '', productId: '', userId: String(user.value?.id || '') })
   Object.keys(customValues).forEach(key => delete customValues[key])
+  matchedClientId.value = null
+  clientSearchMessage.value = ''
+  clientSearchLoading.value = false
+  clientSearchSequence++
+  if (clientSearchTimer) clearTimeout(clientSearchTimer)
 }
 const close = () => { if (!saving.value) { reset(); emit('close') } }
+onBeforeUnmount(() => {
+  if (clientSearchTimer) clearTimeout(clientSearchTimer)
+  clientSearchSequence++
+})
 const advanceOrSubmit = () => {
   if (!isLastStep.value) {
     if (formElement.value?.reportValidity()) activeStepIndex.value++

@@ -31,10 +31,47 @@ export const formatCustomFieldValue = (type: string, value: unknown): string => 
   return String(value)
 }
 
+const customFieldIdKeys = ['custom_field_id', 'customFieldId', 'field_id', 'fieldId', 'key', 'id']
+const customFieldValueKeys = ['value', 'field_value', 'fieldValue', 'answer', 'content', 'valor']
+
+const extractCustomFieldId = (record: Record<string, unknown>) => {
+  for (const key of customFieldIdKeys) {
+    const value = record[key]
+    if (value == null || value === '') continue
+    return String(value)
+  }
+
+  const field = record.field || record.custom_field || record.customField
+  if (field && typeof field === 'object' && !Array.isArray(field)) {
+    return extractCustomFieldId(field as Record<string, unknown>)
+  }
+
+  return null
+}
+
+const extractCustomFieldValue = (record: Record<string, unknown>) => {
+  for (const key of customFieldValueKeys) {
+    if (key in record) return record[key]
+  }
+
+  const { custom_field_id, customFieldId, field_id, fieldId, key, id, field, custom_field, customField, ...value } = record
+  return Object.keys(value).length === 1 && 'label' in value ? null : value
+}
+
 /** Normalize Laravel's custom_data envelope into its field-ID/value map. */
 export const extractCustomFields = (data: unknown): Record<string, unknown> => {
   if (typeof data === 'string') {
     try { return extractCustomFields(JSON.parse(data)) } catch { return {} }
+  }
+  if (Array.isArray(data)) {
+    return data.reduce<Record<string, unknown>>((fields, item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return fields
+      const record = item as Record<string, unknown>
+      const id = extractCustomFieldId(record)
+      if (!id) return fields
+      fields[id] = extractCustomFieldValue(record)
+      return fields
+    }, {})
   }
   if (!data || typeof data !== 'object' || Array.isArray(data)) return {}
   const record = data as Record<string, unknown>
