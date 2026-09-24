@@ -139,10 +139,8 @@
                 </div>
               </nav>
 
-              <div v-if="activeTab === 'registration'" class="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-3">
-                
-                <div class="grid grid-cols-1 gap-6 lg:col-span-2 lg:grid-cols-2 xl:col-span-2">
-                  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div v-if="activeTab === 'registration'" class="columns-1 gap-6 lg:columns-3">
+                  <div class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-4 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dados do Cliente</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" title="Editar dados do cliente" @click="openEdit({ type: 'client-core', title: 'dados do cliente' })">
@@ -214,7 +212,7 @@
                     </div>
                   </div>
 
-                  <div v-for="section in clientDetailSections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div v-for="section in clientDetailSections" :key="section.title" class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-4 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" :title="`Editar ${section.title}`" @click="openEdit({ type: 'client-custom-section', title: section.title, fieldIds: section.fields.map(field => field.id) })">
@@ -228,10 +226,7 @@
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div class="lg:col-span-3 xl:col-span-1 space-y-6">
-                  <div v-if="hasClientValue(deal.phone)" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div v-if="hasClientValue(deal.phone)" class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-3 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Contatos</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" title="Editar contatos" @click="openEdit({ type: 'client-core', title: 'contatos' })">
@@ -255,7 +250,6 @@
                       </div>
                     </div>
                   </div>
-                </div>
 
               </div>
 
