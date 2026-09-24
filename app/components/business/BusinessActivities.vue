@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{ businessId: number, funnelId?: string }>()
+const emit = defineEmits<{ updated: [] }>()
 const toast = useToast()
 const { user } = useAuth()
 const showForm = ref(false)
@@ -31,8 +32,9 @@ const { activityTypes, loadActivityTypes } = useActivityTypes()
 const activeTypes = computed(() => activityTypes.value.filter(item => item.active && (!item.funnelIds.length || item.funnelIds.includes(props.funnelId || ''))))
 const { assignees, assigneesLoading, assigneesError, loadAssignees, activities, loading, saving, loadActivities, addActivity, setStatus, removeActivity } = useBusinessActivities(businessId)
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
-const submit = async () => { await addActivity({ title: form.title, description: form.description || undefined, scheduled_at: form.scheduledAt, activity_type_id: form.activityTypeId, user_id: form.userId }); Object.assign(form, { activityTypeId: 0, userId: 0, scheduledAt: '', title: '', description: '' }); showForm.value = false; toast.success('Atividade agendada.') }
-const remove = async (id: number) => { if (await toast.confirm('A atividade será excluída.', { title: 'Excluir atividade?', confirmLabel: 'Excluir' })) await removeActivity(id) }
+const submit = async () => { await addActivity({ title: form.title, description: form.description || undefined, scheduled_at: form.scheduledAt, activity_type_id: form.activityTypeId, user_id: form.userId }); Object.assign(form, { activityTypeId: 0, userId: 0, scheduledAt: '', title: '', description: '' }); showForm.value = false; emit('updated'); toast.success('Atividade agendada.') }
+const complete = async (id: number) => { await setStatus(id, 'completed'); emit('updated') }
+const remove = async (id: number) => { if (await toast.confirm('A atividade será excluída.', { title: 'Excluir atividade?', confirmLabel: 'Excluir' })) { await removeActivity(id); emit('updated') } }
 onMounted(() => Promise.all([loadActivities(), loadActivityTypes()]))
 watch(businessId, () => { showForm.value = false; void loadActivities() })
 watch(showForm, open => { if (open) void loadAssignees() })

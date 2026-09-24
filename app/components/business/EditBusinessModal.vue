@@ -33,7 +33,7 @@
           </div>
         </section>
 
-        <section v-else-if="editTarget.type === 'group-row' && groupField" class="space-y-5">
+        <section v-else-if="['group-row', 'group-new'].includes(editTarget.type) && groupField" class="space-y-5">
           <h3 class="section-title">{{ groupField.label }}</h3>
           <div class="grid gap-4 sm:grid-cols-2">
             <label v-for="subField in groupField.subFields" :key="subField.key" class="block space-y-1.5" :class="['textarea', 'file'].includes(subField.type) ? 'sm:col-span-2' : ''">
@@ -69,7 +69,7 @@
 import type { DealCard, CRMCustomField, CRMCustomFieldType, CRMCustomSubFieldType } from '~/types/crm'
 
 export type BusinessEditTarget = {
-  type: 'client-core' | 'deal-core' | 'client-custom-section' | 'business-custom-section' | 'group-row'
+  type: 'client-core' | 'deal-core' | 'client-custom-section' | 'business-custom-section' | 'group-row' | 'group-new'
   title?: string
   fieldIds?: string[]
   groupFieldId?: string
@@ -133,8 +133,12 @@ const canSubmit = computed(() => {
 const modalTitle = computed(() => `Editar ${editTarget.value?.title || 'informações'}`)
 const modalDescription = computed(() => editTarget.value?.type === 'group-row'
   ? 'Atualize somente este item da lista.'
-  : 'Atualize somente os dados deste card.'
+  : editTarget.value?.type === 'group-new'
+    ? 'Preencha os dados para adicionar um novo item.'
+    : 'Atualize somente os dados deste card.'
 )
+
+const emptyGroupRow = (field: CRMCustomField) => Object.fromEntries(field.subFields.map(subField => [subField.key, subField.type === 'checkbox' ? false : '']))
 
 const hydrate = () => {
   if (!props.open || !props.deal) return
@@ -157,6 +161,8 @@ const hydrate = () => {
     const rows = props.deal.customFields[groupField.value.id]
     const row = Array.isArray(rows) ? rows[editTarget.value.rowIndex ?? -1] : null
     Object.assign(groupRow, row && typeof row === 'object' ? row : {})
+  } else if (editTarget.value?.type === 'group-new' && groupField.value) {
+    Object.assign(groupRow, emptyGroupRow(groupField.value))
   }
   void loadLeadSources()
   nextTick(() => { hydrating.value = false })
@@ -189,6 +195,10 @@ const buildGroupRows = () => {
   if (!props.deal || !groupField.value) return []
   const rows = Array.isArray(props.deal.customFields[groupField.value.id]) ? [...props.deal.customFields[groupField.value.id] as Array<Record<string, unknown>>] : []
   const index = editTarget.value?.rowIndex ?? -1
+  if (editTarget.value?.type === 'group-new') {
+    rows.push(Object.fromEntries(groupField.value.subFields.map(subField => [subField.key, normalizeCustomValue(subField.type, groupRow[subField.key])])))
+    return rows
+  }
   if (index < 0) return rows
   rows[index] = Object.fromEntries(groupField.value.subFields.map(subField => [subField.key, normalizeCustomValue(subField.type, groupRow[subField.key])]))
   return rows
@@ -217,7 +227,7 @@ const submit = async () => {
       } })
     } else if (editTarget.value.type === 'client-custom-section') {
       await request(`/clients/${props.deal.clientId}`, { method: 'PATCH', body: { extra: { custom_fields: buildClientCustomFields() } } })
-    } else if (editTarget.value.type === 'group-row' && groupField.value) {
+    } else if (['group-row', 'group-new'].includes(editTarget.value.type) && groupField.value) {
       await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: { custom_data: { custom_fields: { ...props.deal.customFields, [groupField.value.id]: buildGroupRows() } } } })
     } else {
       await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: { custom_data: { custom_fields: buildBusinessCustomFields() } } })

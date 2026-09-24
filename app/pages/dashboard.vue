@@ -29,7 +29,7 @@
           <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="flex items-center justify-between gap-3">
               <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">Funis da instância</h2>
-              <NuxtLink to="/configuracoes/funis" class="text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Configurar</NuxtLink>
+              <NuxtLink v-if="canManageSettings" to="/configuracoes/funis" class="text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Configurar</NuxtLink>
             </div>
             <div class="mt-4 grid gap-3 md:grid-cols-3">
               <div v-for="funnel in funnels" :key="funnel.id" class="rounded-xl bg-slate-50 p-4 dark:bg-slate-950">
@@ -61,13 +61,14 @@
 </template>
 
 <script setup lang="ts">
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, user } = useAuth()
 const { totalPipeline, refreshDeals, dealsLoading } = useKanbanData()
 const { funnels, tasks } = useCrmSettings()
 const { instanceId } = useApi()
 const totalFormatted = computed(() => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(totalPipeline.value)
 })
+const canManageSettings = computed(() => ['master', 'admin'].includes(String(user.value?.role || '').toLowerCase()))
 
 onMounted(() => {
   if (instanceId.value && !dealsLoading.value) void refreshDeals()

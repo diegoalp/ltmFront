@@ -52,6 +52,16 @@ the proxy. The Laravel API should reject relationships belonging to another
 instance and should prevent deletion of catalog items that are already in use
 (or archive them by setting `active` to false).
 
+## Business status contract
+
+Laravel business statuses use the following numeric values:
+
+- `1` (`Open`): business is open and can continue through the funnel.
+- `2` (`Lost`): business was lost.
+- `3` (`Winned`): business was won.
+
+The frontend maps these API values to `active`, `lost`, and `won` respectively.
+
 ## Activities calendar
 
 - `POST /api/activities`: `business_id`, `activity_type_id`, `title`,

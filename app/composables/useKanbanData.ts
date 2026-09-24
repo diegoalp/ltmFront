@@ -1,4 +1,5 @@
 import type { DealCard, DealStage, KanbanColumn } from '~/types/crm'
+import { BUSINESS_STATUS } from '~/types/api'
 import type { ApiBusiness, ApiCollectionResponse, ApiPaginatedResponse, ApiResourceResponse } from '~/types/api'
 
 import { extractCustomFields } from '~/utils/customFieldDisplay'
@@ -32,7 +33,7 @@ const mapBusiness = (item: ApiBusiness): DealCard => ({
   timeline: item.timeline || [], conversation: item.conversation || [],
   customFields: { ...extractCustomFields(item.customData), ...extractCustomFields(item.custom_data) },
   clientCustomFields: { ...extractCustomFields(item.client?.extra), ...extractCustomFields(item.client?.customData), ...extractCustomFields(item.client?.custom_data) },
-  status: item.status === 2 ? 'won' : item.status === 0 || item.lossReason ? 'lost' : 'active', lossReason: item.lossReason || null
+  status: item.status === BUSINESS_STATUS.WON ? 'won' : item.status === BUSINESS_STATUS.LOST ? 'lost' : 'active', lossReason: item.lossReason || null
 })
 
 export const useKanbanData = () => {
@@ -45,7 +46,7 @@ export const useKanbanData = () => {
   const loaded = useState('kanban-deals-loaded', () => false)
   const stagePagination = useState<Record<string, StagePaginationState>>('kanban-stage-pagination', () => ({}))
 
-  const statusQueryValue = (status: DealsFilter['status']) => status === 'won' ? 2 : status === 'lost' ? 0 : null
+  const statusQueryValue = (status: DealsFilter['status']) => status === 'won' ? BUSINESS_STATUS.WON : status === 'lost' ? BUSINESS_STATUS.LOST : null
   const normalizeCollection = <T>(response: ApiCollectionResponse<T>): ApiPaginatedResponse<T> => {
     if (Array.isArray(response)) {
       return { data: response, current_page: 1, last_page: 1, total: response.length }
@@ -261,15 +262,28 @@ export const useKanbanData = () => {
     deal.funnelStageId = stageId
     deal.stage = Math.min(Math.max(stageIndex + 1, 1), 6) as DealStage
     try {
-      await request(`/businesses/${dealId}`, { method: 'PATCH', body: { funnel_id: Number(funnelId), stage_id: Number(stageId) } })
+      await request(`/businesses/${dealId}`, {
+        method: 'PATCH',
+        body: {
+          category_id: Number(deal.categoryId),
+          product_id: deal.productId == null ? null : Number(deal.productId),
+          funnel_id: Number(funnelId),
+          stage_id: Number(stageId)
+        }
+      })
       await refreshDeals({ funnelId, stageIds: [...new Set([previous.funnelStageId, stageId].filter(Boolean).map(String))] })
     }
     catch (cause) { Object.assign(deal, previous); dealsError.value = cause instanceof Error ? cause.message : 'Erro ao mover negócio.' }
   }
   /** Home compatibility: accepts either a numeric position or the real stage ID. */
   const moveDeal = async (dealId: number, stage: DealStage | string) => {
-    const target = columns.value.find((_, index) => index + 1 === Number(stage)) || columns.value.find(column => String(column.id) === String(stage))
-    if (target && firstFunnel.value) await moveDealInFunnel(dealId, firstFunnel.value.id, String(target.id))
+    const deal = deals.value.find(item => item.id === dealId)
+    const funnelId = deal?.funnelId || firstFunnel.value?.id
+    if (!funnelId) return
+
+    const availableColumns = funnelColumns(funnelId)
+    const target = availableColumns.find((_, index) => index + 1 === Number(stage)) || availableColumns.find(column => String(column.id) === String(stage))
+    if (target) await moveDealInFunnel(dealId, funnelId, String(target.id))
   }
   const assignDealOwner = async (dealId: number, userId: number) => {
     const deal = deals.value.find(item => item.id === dealId)
@@ -300,6 +314,17 @@ export const useKanbanData = () => {
       : [...deals.value, item]
     return item
   }
+  const removeDeal = async (id: number) => {
+    await request(`/businesses/${id}`, { method: 'DELETE' })
+    const removedDeal = deals.value.find(card => card.id === id)
+    deals.value = deals.value.filter(card => card.id !== id)
+
+    if (removedDeal) {
+      const stageId = String(removedDeal.funnelStageId)
+      const state = stagePageState(stageId)
+      setStagePageState(stageId, { total: Math.max(0, state.total - 1) })
+    }
+  }
   const findDealById = (id: number) => deals.value.find(item => item.id === id)
 
   watch(instanceId, () => {
@@ -309,7 +334,7 @@ export const useKanbanData = () => {
   })
   return {
     columns, deals, totalPipeline, cardsByColumn, funnelColumns, dealsByFunnel, totalByFunnel,
-    cardsByFunnelColumn, moveDeal, moveDealInFunnel, assignDealOwner, loadDealById, findDealById, refreshDeals,
+    cardsByFunnelColumn, moveDeal, moveDealInFunnel, assignDealOwner, loadDealById, removeDeal, findDealById, refreshDeals,
     loadNextStagePage, stagePageState, stageHasMore, dealsLoading, dealsError
   }
 }

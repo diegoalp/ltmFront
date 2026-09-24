@@ -3,6 +3,9 @@ import type { DealCard } from './crm'
 export interface ApiPaginatedResponse<T> { data: T[], current_page?: number, last_page?: number, total?: number, meta?: { last_page?: number } }
 export type ApiCollectionResponse<T> = ApiPaginatedResponse<T> | T[]
 export interface ApiResourceResponse<T> { data: T }
+/** Canonical business status codes returned by the Laravel API. */
+export const BUSINESS_STATUS = { OPEN: 1, LOST: 2, WON: 3 } as const
+export type ApiBusinessStatus = typeof BUSINESS_STATUS[keyof typeof BUSINESS_STATUS]
 export interface ApiUser { id: number, name: string, lastname?: string | null, type?: string, instance_id?: number | string | null, funnel_id?: number | string | null }
 export interface ApiInstance { id: number | string, name: string, expiration_date?: string | null, is_expired?: boolean }
 export interface ApiStage { id: number, funnel_id: number, name: string, color?: string | null, position: number, duration?: number | null, durationUnit?: string | null, is_final?: boolean }

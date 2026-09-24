@@ -21,14 +21,14 @@
         </span>
       </div>
 
-      <!-- <dl class="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
+      <dl class="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
         <div class="flex items-center justify-between">
           <dd>{{ card.ownerName }}</dd>
         </div>
-        <div class="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
+        <!-- <div class="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
           <dd>{{ formatCurrency(card.value) }}</dd>
-        </div>
-      </dl> -->
+        </div> -->
+      </dl>
     </article>
   </component>
 </template>
