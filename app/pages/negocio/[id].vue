@@ -259,7 +259,7 @@
 
               </div>
 
-              <div v-else-if="activeTab === 'business'" class="grid gap-6 lg:grid-cols-2">
+              <div v-else-if="activeTab === 'business'" class="grid gap-6 lg:grid-cols-1">
                 <section v-for="section in businessDisplaySections.filter(item => item.fields.length)" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   <div class="mb-4 flex items-center justify-between gap-3">
                     <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h2>
@@ -267,7 +267,10 @@
                       <Icon name="mdi:pencil-outline" size="16" />
                     </button>
                   </div>
-                  <div class="grid gap-4 sm:grid-cols-2">
+                  <div
+                    class="grid grid-cols-1 gap-4"
+                    :class="section.fields.length === 1 ? 'lg:grid-cols-1' : section.fields.length === 2 ? 'lg:grid-cols-2' : section.fields.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'"
+                  >
                     <div v-for="field in section.fields" :key="field.id" class="field-pair rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
                       <span class="field-name">{{ field.label }}</span>
                       <button type="button" class="copy-value field-value" :title="`Copiar ${field.label}`" @click="copyValue(field.label, displaySubFieldValue(field.type, field.value))">{{ displaySubFieldValue(field.type, field.value) || '—' }}</button>
@@ -291,7 +294,7 @@
                       Adicionar
                     </button>
                   </div>
-                  <div v-if="groupFieldRows(activeRepeatableField).length" class="grid gap-3 lg:grid-cols-2">
+                  <div v-if="groupFieldRows(activeRepeatableField).length" class="grid gap-3 lg:grid-cols-1">
                     <div v-for="(row, rowIndex) in groupFieldRows(activeRepeatableField)" :key="rowIndex" class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
                       <div class="mb-3 flex items-center justify-between gap-2">
                         <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Item {{ rowIndex + 1 }}</span>
