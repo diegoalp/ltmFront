@@ -29,6 +29,26 @@
           <dd>{{ formatCurrency(card.value) }}</dd>
         </div> -->
       </dl>
+      <div v-if="checklists.length" class="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <div class="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400"><span class="inline-flex items-center gap-1"><Icon name="mdi:checkbox-marked-outline" size="13" />Checklist</span><span>{{ completedChecklistItems }}/{{ totalChecklistItems }}</span></div>
+        <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-full rounded-full bg-emerald-500" :style="{ width: `${checklistCompletionPercent}%` }" /></div>
+        <div class="mt-2 max-h-44 space-y-2 overflow-y-auto pr-1" @click.stop>
+          <section v-for="checklist in checklists" :key="checklist.id">
+            <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ checklist.title }}</p>
+            <label v-for="item in checklist.items" :key="item.id" class="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-[11px] transition hover:bg-slate-50 dark:hover:bg-slate-800/70" :class="{ 'opacity-60': isChecklistItemPending(checklist.id, item.id) }">
+              <input
+                type="checkbox"
+                :checked="item.done"
+                :disabled="isChecklistItemPending(checklist.id, item.id)"
+                class="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                @click.stop
+                @change="toggleChecklistItemFromEvent(checklist.id, item.id, $event)"
+              />
+              <span class="leading-4" :class="item.done ? 'text-slate-400 line-through dark:text-slate-500' : 'text-slate-600 dark:text-slate-300'">{{ item.label }}<span v-if="item.required" class="ml-0.5 text-rose-500">*</span></span>
+            </label>
+          </section>
+        </div>
+      </div>
     </article>
   </component>
 </template>
@@ -42,6 +62,9 @@ const { isDealDisabled, isExpired } = useBusinessExpiration()
 const disabled = computed(() => isDealDisabled(props.card))
 const { categoryById } = useCategories()
 const { productById } = useProducts()
+const checklistBusinessId = computed(() => props.card.id)
+const { checklists, load: loadChecklists, toggleItem: toggleChecklistItem, totalItems: totalChecklistItems, completedItems: completedChecklistItems, completionPercent: checklistCompletionPercent } = useBusinessChecklists(checklistBusinessId)
+const pendingChecklistItems = ref(new Set<string>())
 
 const categoryName = computed(() => categoryById(props.card.categoryId)?.name ?? 'Sem categoria')
 const product = computed(() => productById(props.card.productId))
@@ -78,4 +101,23 @@ const formatCurrency = (value: number) => {
 const formatDate = (value: string) => {
   return new Intl.DateTimeFormat('pt-BR', { month: 'short', day: 'numeric' }).format(new Date(value))
 }
+
+const checklistItemKey = (checklistId: number, itemId: number) => `${checklistId}:${itemId}`
+const isChecklistItemPending = (checklistId: number, itemId: number) => pendingChecklistItems.value.has(checklistItemKey(checklistId, itemId))
+const toggleChecklistItemFromEvent = async (checklistId: number, itemId: number, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const key = checklistItemKey(checklistId, itemId)
+  pendingChecklistItems.value = new Set([...pendingChecklistItems.value, key])
+  try {
+    await toggleChecklistItem(checklistId, itemId, target.checked)
+  } catch {
+    target.checked = !target.checked
+  } finally {
+    const next = new Set(pendingChecklistItems.value)
+    next.delete(key)
+    pendingChecklistItems.value = next
+  }
+}
+
+onMounted(() => { void loadChecklists() })
 </script>

@@ -380,8 +380,25 @@
               <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Prazo: {{ formatActivityDate(nextActivity.scheduledAt) }}</p>
               <button type="button" class="mt-4 w-full rounded-xl bg-amber-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-amber-500" @click="activeTab = 'activities'">Ver atividades</button>
             </div>
-            <div class="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-400 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
-              Checklist do negócio
+            <div v-if="businessChecklists.length" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2"><Icon name="mdi:check-circle-outline" size="18" class="text-emerald-500" /><span class="text-sm font-bold text-slate-900 dark:text-slate-100">Checklist do negócio</span></div>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ completedChecklistItems }}/{{ totalChecklistItems }}</span>
+              </div>
+              <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-full rounded-full bg-emerald-500 transition-all" :style="{ width: `${checklistCompletionPercent}%` }" /></div>
+              <div class="mt-4 space-y-4">
+                <section v-for="checklist in businessChecklists" :key="checklist.id">
+                  <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ checklist.title }}</p>
+                  <p v-if="checklist.description" class="mt-1 text-[11px] text-slate-400">{{ checklist.description }}</p>
+                  <label v-for="item in checklist.items" :key="item.id" class="mt-2 flex cursor-pointer items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <input type="checkbox" :checked="item.done" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" @change="toggleChecklistItemFromEvent(checklist.id, item.id, $event)" />
+                    <span :class="item.done ? 'text-slate-400 line-through' : ''">{{ item.label }}<em v-if="item.required && !item.done" class="ml-1 not-italic text-rose-500">*</em></span>
+                  </label>
+                </section>
+              </div>
+            </div>
+            <div v-else-if="!businessChecklistsLoading" class="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-400 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
+              Nenhuma checklist aplicável
             </div>
           </aside>
         </div>
@@ -523,6 +540,7 @@ const dealId = computed(() => {
 })
 
 const deal = computed(() => findDealById(dealId.value))
+const { checklists: businessChecklists, loading: businessChecklistsLoading, load: loadBusinessChecklists, toggleItem: toggleBusinessChecklistItem, totalItems: totalChecklistItems, completedItems: completedChecklistItems, completionPercent: checklistCompletionPercent } = useBusinessChecklists(dealId)
 const dealStageColumns = computed(() => deal.value?.funnelId ? funnelColumns(deal.value.funnelId) : columns.value)
 const { activities: dealActivities, loadActivities: loadDealActivities } = useBusinessActivities(dealId)
 const category = computed(() => deal.value ? categoryById(deal.value.categoryId) : undefined)
@@ -766,6 +784,7 @@ onMounted(async () => {
   try {
     if (!deal.value) await loadDealById(dealId.value)
     await loadDealActivities()
+    await loadBusinessChecklists()
     if (!users.value.length) await loadUsers()
   } finally {
     initialLoading.value = false
@@ -804,6 +823,14 @@ const nextActivity = computed<CRMActivity | null>(() => [...dealActivities.value
   .filter(activity => activity.status === 'pending')
   .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0] || null)
 const formatActivityDate = (value: string) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+const toggleChecklistItem = async (checklistId: number, itemId: number, done: boolean) => {
+  try { await toggleBusinessChecklistItem(checklistId, itemId, done) } catch { /* useApi exibe a mensagem da API. */ }
+}
+const toggleChecklistItemFromEvent = (checklistId: number, itemId: number, event: Event) => {
+  const target = event.target as HTMLInputElement
+  return toggleChecklistItem(checklistId, itemId, target.checked)
+}
+watch(dealId, () => { void loadBusinessChecklists() })
 
 const changeStage = async (stage: DealStage | string) => {
   if (!deal.value) return

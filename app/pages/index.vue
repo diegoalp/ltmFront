@@ -1,6 +1,6 @@
 <template>
   <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-    <div>
+    <div class="min-w-0 md:flex-1">
       <p class="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Pipeline</p>
       <h1 class="text-2xl font-semibold md:text-3xl priority-color">{{ selectedFunnel?.name ?? 'Quadro de oportunidades' }}</h1>
       <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -8,8 +8,8 @@
       </p>
     </div>
 
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-label="Filtrar negócios por status">
+    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end xl:flex-nowrap">
+      <div class="flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-label="Filtrar negócios por status">
         <button
           type="button"
           class="status-filter-button"
@@ -31,31 +31,45 @@
           Perdidos
         </button>
       </div>
-      <button type="button" :disabled="!availableFunnels.length || hasExpiredDeals" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50" @click="newBusinessOpen = true"><Icon name="mdi:plus" size="18" />Novo negócio</button>
+      <button type="button" :disabled="!availableFunnels.length || hasExpiredDeals" class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50" @click="newBusinessOpen = true"><Icon name="mdi:plus" size="18" />Novo negócio</button>
       <label v-if="canChooseFunnel" class="sr-only" for="funnel-selector">Selecionar funil</label>
       <select
         v-if="canChooseFunnel"
         id="funnel-selector"
         v-model="selectedFunnelId"
-        class="min-w-56 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        class="min-w-56 shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
       >
         <option disabled value="">Selecione um funil</option>
         <option v-for="funnel in availableFunnels" :key="funnel.id" :value="funnel.id">
           {{ funnel.name }}
         </option>
       </select>
-      <span v-else-if="selectedFunnel" class="inline-flex min-w-56 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+      <span v-else-if="selectedFunnel" class="inline-flex min-w-56 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
         <Icon name="mdi:lock-outline" size="17" />
         {{ selectedFunnel.name }}
       </span>
+      <label v-if="canFilterByOwner" class="sr-only" for="owner-selector">Filtrar por usuário responsável</label>
+      <select
+        v-if="canFilterByOwner"
+        id="owner-selector"
+        v-model="selectedOwnerId"
+        class="min-w-56 shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+      >
+        <option value="">Todos os responsáveis</option>
+        <option v-for="owner in availableOwners" :key="owner.id" :value="String(owner.id)">
+          {{ owner.name }}
+        </option>
+      </select>
 
+      <!--
       <NuxtLink
         to="/"
-        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+        class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         <Icon name="mdi:view-dashboard-outline" size="18" />
         Visão geral
       </NuxtLink>
+      -->
     </div>
   </header>
 
@@ -106,18 +120,23 @@ const { user, isAuthenticated } = useAuth()
 const { instanceId } = useApi()
 const { funnels, funnelsLoading: settingsLoading, funnelsError: settingsError } = useFunnels()
 const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, loadNextStagePage, stagePageState, stageHasMore } = useKanbanData()
+const { users, loadUsers } = useUsers()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
 type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
 const statusFilter = ref<StatusFilter | null>(null)
+const selectedOwnerId = ref('')
 
 const isAdmin = computed(() => user.value?.role === 'admin')
+const canFilterByOwner = computed(() => ['admin', 'master'].includes(user.value?.role || ''))
 const assignedFunnelId = computed(() => user.value?.funnelId == null ? '' : String(user.value.funnelId))
 const canChooseFunnel = computed(() => !assignedFunnelId.value)
 const availableFunnels = computed(() => {
   if (!assignedFunnelId.value) return funnels.value
   return funnels.value.filter(funnel => funnel.id === assignedFunnelId.value)
 })
+const availableOwners = computed(() => [...users.value].sort((first, second) => first.name.localeCompare(second.name, 'pt-BR')))
+const selectedOwnerFilter = computed(() => selectedOwnerId.value ? Number(selectedOwnerId.value) : null)
 
 // Keep an independent funnel selection for each tenant.
 const persistedFunnelId = useCookie<string | null>(`crm-funnel-id-${instanceId.value || 'default'}`, {
@@ -129,7 +148,7 @@ const selectionReady = ref(false)
 const selectedFunnel = computed(() => availableFunnels.value.find((funnel) => funnel.id === selectedFunnelId.value))
 const selectedColumns = computed(() => funnelColumns(selectedFunnelId.value))
 const selectedStageIds = computed(() => selectedColumns.value.map(column => String(column.id)))
-const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value))
+const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value).filter(card => !selectedOwnerFilter.value || String(card.ownerId) === selectedOwnerId.value))
 const selectedTotal = computed(() => selectedDeals.value.reduce((sum, card) => sum + card.value, 0))
 const selectedCardsByColumn = computed(() => Object.fromEntries(
   selectedColumns.value.map(column => [String(column.id), selectedDeals.value.filter(card => card.funnelStageId === String(column.id))])
@@ -169,11 +188,12 @@ const refreshSelectedFunnel = async () => {
   await refreshDeals({
     funnelId: selectedFunnelId.value,
     stageIds: selectedStageIds.value,
-    status: statusFilter.value
+    status: statusFilter.value,
+    userId: selectedOwnerFilter.value
   })
 }
 
-watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter], () => {
+watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter, selectedOwnerId], () => {
   void refreshSelectedFunnel()
 }, { immediate: true })
 
@@ -186,7 +206,8 @@ const handleLoadMore = (stage: KanbanColumn['id']) => {
   if (!selectedFunnelId.value) return
   void loadNextStagePage(stage, {
     funnelId: selectedFunnelId.value,
-    status: statusFilter.value
+    status: statusFilter.value,
+    userId: selectedOwnerFilter.value
   })
 }
 
@@ -196,6 +217,10 @@ const toggleStatusFilter = (status: StatusFilter) => {
 
 if (import.meta.client && !isAuthenticated.value) {
   await navigateTo('/login')
+}
+
+if (import.meta.client && canFilterByOwner.value) {
+  await loadUsers()
 }
 
 </script>

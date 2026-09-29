@@ -18,7 +18,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
   if (publicPage) return navigateTo('/')
   const role = String(user.value?.role || '').toLowerCase()
-  if (to.path.startsWith('/configuracoes') && role === 'seller') return navigateTo('/')
+  if (to.path.startsWith('/configuracoes') && !['master', 'admin'].includes(role)) return navigateTo('/')
   if (to.path === '/instancia-expirada') return
   if (instanceId.value) {
     const response = await request<ApiResourceResponse<ApiInstance>>(`/instances/${instanceId.value}`)

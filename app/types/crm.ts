@@ -75,6 +75,11 @@ export interface CRMCatalogItem { id: number, name: string, color?: string | nul
 export interface CRMActivityType extends CRMCatalogItem { funnelIds: string[] }
 export interface CRMNote { id: number, body: string, authorName: string, createdAt: string }
 export interface CRMActivity { id: number, title: string, description: string, scheduledAt: string, status: 'pending' | 'completed' | 'cancelled', activityTypeId: number, activityTypeName: string, activityTypeColor: string, ownerName: string }
+export interface CRMChecklistItem { id?: number, label: string, position: number, required: boolean }
+export interface CRMChecklistCondition { id?: number, funnelId: string, productIds: number[], minStageId: number | null }
+export interface CRMChecklist { id: number, title: string, description: string, active: boolean, funnelIds: string[], funnelNames: string[], items: CRMChecklistItem[], conditions: CRMChecklistCondition[], createdAt?: string, updatedAt?: string }
+export interface CRMBusinessChecklistItem { id: number, label: string, position: number, required: boolean, done: boolean, completedAt: string | null, completedBy: number | null }
+export interface CRMBusinessChecklist { id: number, title: string, description: string, items: CRMBusinessChecklistItem[] }
 
 export interface KanbanColumn {
   id: DealStage | string

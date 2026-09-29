@@ -75,6 +75,7 @@
             </NuxtLink>
             <NuxtLink to="/configuracoes/tipos-atividades" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group"><span>Tipos de atividades</span><span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span></NuxtLink>
             <NuxtLink to="/configuracoes/tipos-documentos" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group"><span>Tipos de documentos</span><span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span></NuxtLink>
+            <NuxtLink to="/configuracoes/checklists" class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition group"><span>Checklists</span><span class="text-gray-400 group-hover:translate-x-1 transition-transform">&rarr;</span></NuxtLink>
           </nav>
         </div>
       </div>

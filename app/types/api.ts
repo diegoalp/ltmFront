@@ -24,6 +24,11 @@ export interface ApiDocumentType { id: number, name: string, active?: boolean }
 export interface ApiNote { id: number, body: string, business_id: number, created_at: string, user?: { id?: number, name?: string } | null }
 export interface ApiActivity { id: number, title: string, description?: string | null, scheduled_at: string, status: 'pending' | 'completed' | 'cancelled', business_id: number, user_id: number, business_name?: string | null, completed_at?: string | null, activity_type_id: number, activity_type?: ApiActivityType | null, user?: { id?: number, name?: string } | null }
 export interface ApiPublicForm { id: number, name: string, headline: string, channel?: string | null, funnel_id: number, fields?: string[], active: boolean }
+export interface ApiChecklistItem { id: number, checklist_id?: number, label: string, position: number, required: boolean }
+export interface ApiChecklistCondition { id?: number, funnel_id: number, product_ids?: number[], min_stage_id?: number | null }
+export interface ApiChecklist { id: number, instance_id: number, title: string, description?: string | null, active: boolean, funnels?: Array<{ id: number, name?: string }>, items?: ApiChecklistItem[], conditions?: ApiChecklistCondition[], created_at?: string, updated_at?: string }
+export interface ApiBusinessChecklistItem extends ApiChecklistItem { done: boolean, completed_at?: string | null, completed_by?: number | null }
+export interface ApiBusinessChecklist { id: number, title: string, description?: string | null, items: ApiBusinessChecklistItem[] }
 
 export interface ApiBusiness {
   id: number, client_id: number, user_id: number, category_id: number, product_id: number | null, funnel_id: number, stage_id: number, lead_source_id?: number | null,
