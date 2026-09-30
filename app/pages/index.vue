@@ -1,14 +1,26 @@
 <template>
-  <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-    <div class="min-w-0 md:flex-1">
+  <header class="space-y-4">
+    <div>
       <p class="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Pipeline</p>
       <h1 class="text-2xl font-semibold md:text-3xl priority-color">{{ selectedFunnel?.name ?? 'Quadro de oportunidades' }}</h1>
       <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
         {{ selectedFunnel?.description ?? 'Arraste os cards entre etapas, acompanhe valores e acesse o detalhe de cada negócio.' }}
       </p>
     </div>
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <label class="relative min-w-0 flex-1">
+        <span class="sr-only">Buscar negócio pelo nome, CPF ou CNPJ do cliente</span>
+        <Icon name="mdi:magnify" size="19" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          v-model="searchQuery"
+          type="search"
+          placeholder="Buscar negócio por nome, CPF ou CNPJ"
+          class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+          @keydown.enter.prevent="applySearch"
+        />
+      </label>
 
-    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end xl:flex-nowrap">
+      <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end xl:flex-nowrap">
       <div class="flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-label="Filtrar negócios por status">
         <button
           type="button"
@@ -70,6 +82,7 @@
         Visão geral
       </NuxtLink>
       -->
+      </div>
     </div>
   </header>
 
@@ -124,8 +137,6 @@ const { users, loadUsers } = useUsers()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
 type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
-const statusFilter = ref<StatusFilter | null>(null)
-const selectedOwnerId = ref('')
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const canFilterByOwner = computed(() => ['admin', 'master'].includes(user.value?.role || ''))
@@ -143,12 +154,29 @@ const persistedFunnelId = useCookie<string | null>(`crm-funnel-id-${instanceId.v
   sameSite: 'lax',
   maxAge: 60 * 60 * 24 * 90
 })
+const persistedSearchQuery = useCookie<string | null>(`crm-business-search-${instanceId.value || 'default'}`, {
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24 * 90
+})
+const persistedOwnerId = useCookie<string | null>(`crm-business-owner-${instanceId.value || 'default'}`, {
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24 * 90
+})
+const persistedStatusFilter = useCookie<StatusFilter | null>(`crm-business-status-${instanceId.value || 'default'}`, {
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24 * 90
+})
 const selectedFunnelId = ref(assignedFunnelId.value || persistedFunnelId.value || '')
+const searchQuery = ref(persistedSearchQuery.value || '')
+const appliedSearchQuery = ref(persistedSearchQuery.value || '')
+const statusFilter = ref<StatusFilter | null>(persistedStatusFilter.value || null)
+const selectedOwnerId = ref(persistedOwnerId.value || '')
 const selectionReady = ref(false)
 const selectedFunnel = computed(() => availableFunnels.value.find((funnel) => funnel.id === selectedFunnelId.value))
 const selectedColumns = computed(() => funnelColumns(selectedFunnelId.value))
 const selectedStageIds = computed(() => selectedColumns.value.map(column => String(column.id)))
-const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value).filter(card => !selectedOwnerFilter.value || String(card.ownerId) === selectedOwnerId.value))
+const selectedDeals = computed(() => dealsByFunnel(selectedFunnelId.value)
+  .filter(card => !selectedOwnerFilter.value || String(card.ownerId) === selectedOwnerId.value))
 const selectedTotal = computed(() => selectedDeals.value.reduce((sum, card) => sum + card.value, 0))
 const selectedCardsByColumn = computed(() => Object.fromEntries(
   selectedColumns.value.map(column => [String(column.id), selectedDeals.value.filter(card => card.funnelStageId === String(column.id))])
@@ -183,19 +211,36 @@ watch(selectedFunnelId, (value) => {
   if (selectionReady.value && canChooseFunnel.value) persistedFunnelId.value = value || null
 }, { flush: 'sync' })
 
+watch(appliedSearchQuery, (value) => {
+  persistedSearchQuery.value = value || null
+}, { flush: 'sync' })
+
+watch(statusFilter, (value) => {
+  persistedStatusFilter.value = value
+}, { flush: 'sync' })
+
+watch(selectedOwnerId, (value) => {
+  persistedOwnerId.value = value || null
+}, { flush: 'sync' })
+
 const refreshSelectedFunnel = async () => {
   if (!selectionReady.value || !instanceId.value || !selectedFunnelId.value || !selectedStageIds.value.length) return
   await refreshDeals({
     funnelId: selectedFunnelId.value,
     stageIds: selectedStageIds.value,
     status: statusFilter.value,
-    userId: selectedOwnerFilter.value
+    userId: selectedOwnerFilter.value,
+    search: appliedSearchQuery.value
   })
 }
 
-watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter, selectedOwnerId], () => {
+watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter, selectedOwnerId, appliedSearchQuery], () => {
   void refreshSelectedFunnel()
 }, { immediate: true })
+
+const applySearch = () => {
+  appliedSearchQuery.value = searchQuery.value.trim()
+}
 
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
   if (!selectedFunnelId.value) return
@@ -207,7 +252,8 @@ const handleLoadMore = (stage: KanbanColumn['id']) => {
   void loadNextStagePage(stage, {
     funnelId: selectedFunnelId.value,
     status: statusFilter.value,
-    userId: selectedOwnerFilter.value
+    userId: selectedOwnerFilter.value,
+    search: appliedSearchQuery.value
   })
 }
 

@@ -4,7 +4,7 @@ import type { ApiBusiness, ApiCollectionResponse, ApiPaginatedResponse, ApiResou
 
 import { extractCustomFields } from '~/utils/customFieldDisplay'
 
-type DealsFilter = { status?: 'won' | 'lost' | null, userId?: number | null }
+type DealsFilter = { status?: 'won' | 'lost' | null, userId?: number | null, search?: string | null }
 
 interface StagePaginationState {
   page: number
@@ -15,6 +15,7 @@ interface StagePaginationState {
   funnelId: string | null
   status: DealsFilter['status']
   userId: DealsFilter['userId']
+  search: DealsFilter['search']
 }
 
 const mapBusiness = (item: ApiBusiness): DealCard => ({
@@ -94,7 +95,8 @@ export const useKanbanData = () => {
     loaded: false,
     funnelId: null,
     status: null,
-    userId: null
+    userId: null,
+    search: null
   }
 
   const stageHasMore = (stageId: KanbanColumn['id']) => {
@@ -127,7 +129,8 @@ export const useKanbanData = () => {
       loading: true,
       funnelId: options.funnelId ?? currentState.funnelId,
       status: options.status ?? null,
-      userId: options.userId ?? null
+      userId: options.userId ?? null,
+      search: options.search ?? null
     })
     dealsError.value = null
 
@@ -137,6 +140,7 @@ export const useKanbanData = () => {
         stage_id: stage,
         status: statusQueryValue(options.status),
         user_id: options.userId,
+        search: options.search,
         page
       })))
       if (instanceId.value !== requestedInstance) return
@@ -151,7 +155,8 @@ export const useKanbanData = () => {
         loaded: true,
         funnelId: options.funnelId ?? null,
         status: options.status ?? null,
-        userId: options.userId ?? null
+        userId: options.userId ?? null,
+        search: options.search ?? null
       })
       loaded.value = true
     } catch (cause) {
@@ -170,6 +175,7 @@ export const useKanbanData = () => {
       funnelId: options.funnelId ?? state.funnelId,
       status: options.status ?? state.status,
       userId: options.userId ?? state.userId,
+      search: options.search ?? state.search,
       page: state.loaded ? state.page + 1 : 1,
       replace: !state.loaded
     })
@@ -192,6 +198,7 @@ export const useKanbanData = () => {
         funnelId: options.funnelId,
         status: options.status,
         userId: options.userId,
+        search: options.search,
         page: 1,
         replace: true
       })))
@@ -224,7 +231,7 @@ export const useKanbanData = () => {
       return
     }
 
-    const path = buildBusinessesPath({ status, user_id: filters.userId })
+    const path = buildBusinessesPath({ status, user_id: filters.userId, search: filters.search })
     try {
       const response = normalizeCollection(await request<ApiCollectionResponse<ApiBusiness>>(path))
       const items = response.data.map(mapBusiness)
