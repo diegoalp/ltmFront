@@ -139,8 +139,28 @@
                 </div>
               </nav>
 
-              <div v-if="activeTab === 'registration'" class="columns-1 gap-6 lg:columns-3">
-                  <div class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div v-if="activeTab === 'registration'" class="space-y-6">
+                <div v-if="deal.notes" class="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 shadow-sm dark:border-indigo-900/70 dark:bg-indigo-950/30">
+                  <div class="flex items-start gap-3">
+                    <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300">
+                      <Icon name="mdi:message-text-outline" size="19" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-start justify-between gap-3">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Observação do negócio</p>
+                        <button v-if="isDealOpen" type="button" class="edit-card-button -mr-1 -mt-1" title="Editar observação do negócio" @click="openEdit({ type: 'deal-core', title: 'produto e negócio' })">
+                          <Icon name="mdi:pencil-outline" size="16" />
+                        </button>
+                      </div>
+                      <button type="button" class="copy-value mt-2 block w-full text-left text-sm leading-6 text-slate-700 dark:text-slate-200" title="Copiar observação" @click="copyValue('Observação', deal.notes)">
+                        {{ deal.notes }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-4 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dados do Cliente</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" title="Editar dados do cliente" @click="openEdit({ type: 'client-core', title: 'dados do cliente' })">
@@ -212,7 +232,7 @@
                     </div>
                   </div>
 
-                  <div v-for="section in clientDetailSections" :key="section.title" class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div v-for="section in clientDetailSections" :key="section.title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-4 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ section.title }}</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" :title="`Editar ${section.title}`" @click="openEdit({ type: 'client-custom-section', title: section.title, fieldIds: section.fields.map(field => field.id) })">
@@ -226,7 +246,7 @@
                       </div>
                     </div>
                   </div>
-                  <div v-if="hasClientValue(deal.phone)" class="mb-6 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div v-if="hasClientValue(deal.phone)" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="mb-3 flex items-center justify-between gap-3">
                       <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Contatos</h3>
                       <button v-if="isDealOpen" type="button" class="edit-card-button" title="Editar contatos" @click="openEdit({ type: 'client-core', title: 'contatos' })">
@@ -251,6 +271,7 @@
                     </div>
                   </div>
 
+                </div>
               </div>
 
               <div v-else-if="activeTab === 'business'" class="grid gap-6 lg:grid-cols-1">
@@ -310,14 +331,6 @@
               </div>
 
               <div v-else-if="activeTab === 'notes'" class="space-y-4">
-                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div class="mb-3 flex items-center gap-2">
-                    <Icon name="mdi:message-text-outline" class="text-indigo-500" />
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Observação do negócio</h2>
-                  </div>
-                  <p v-if="deal.notes" class="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300">{{ deal.notes }}</p>
-                  <p v-else class="text-sm text-slate-400">Nenhuma observação cadastrada.</p>
-                </section>
                 <BusinessNotes :business-id="deal.id" />
               </div>
 

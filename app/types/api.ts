@@ -18,6 +18,11 @@ export interface ApiCustomField { id: number, label: string, section: string, cu
 export interface ApiCustomFieldSection { id: number, name: string, section: string, position?: number | null }
 export interface ApiPermissionRole { id: number, name: string, description?: string | null, permissions: Record<string, boolean> }
 export interface ApiTask { id: number, title: string, priority: 'low' | 'medium' | 'high', due_at?: string | null, business?: { client?: { fullname?: string } }, owner?: { name?: string } }
+export interface ApiProductionReportSummary { total_production?: number, total_value?: number, average_value?: number, won_count?: number, lost_count?: number, open_count?: number, total_count?: number, [key: string]: unknown }
+export interface ApiProductionReportRow { id?: number | string, user_id?: number | string | null, user_name?: string | null, product_id?: number | string | null, product_name?: string | null, total?: number, total_value?: number, count?: number, won_count?: number, lost_count?: number, custom_fields?: Record<string, unknown>, [key: string]: unknown }
+export interface ApiProductionChartItem { label?: string, status?: number, count?: number, total_value?: number, user_id?: number | string | null, user_name?: string | null, product_id?: number | string | null, product_name?: string | null, won_count?: number, lost_count?: number, open_count?: number, total_count?: number }
+export interface ApiProductionReport { summary?: ApiProductionReportSummary, rows?: ApiProductionReportRow[], data?: ApiProductionReportRow[] | { summary?: ApiProductionReportSummary, rows?: ApiProductionReportRow[] }, status_breakdown?: ApiProductionChartItem[], loss_reasons?: ApiProductionChartItem[], losses_by_user?: ApiProductionChartItem[], outcomes_by_product?: ApiProductionChartItem[], custom_field_totals?: Record<string, number>, meta?: { from?: string, to?: string, generated_at?: string, [key: string]: unknown } }
+export interface ApiSavedReport { id: number, name: string, filters: Record<string, unknown>, user_id?: number, created_at?: string, updated_at?: string }
 export interface ApiDocument { id: number, title: string, file: string, type: string, object_id: number | string, disk?: string | null, file_url?: string | null, download_url?: string | null, url?: string | null, original_name?: string | null, mime_type?: string | null, created_at?: string | null }
 export interface ApiActivityType { id: number, activity_type: string, funnel_ids: number[], color?: string | null, active?: boolean }
 export interface ApiDocumentType { id: number, name: string, active?: boolean }
@@ -32,7 +37,7 @@ export interface ApiBusinessChecklist { id: number, title: string, description?:
 
 export interface ApiBusiness {
   id: number, client_id: number, user_id: number, category_id: number, product_id: number | null, funnel_id: number, stage_id: number, lead_source_id?: number | null,
-  status: number, value: number, priority?: DealCard['priority'], dueDate?: string | null, expiration_date?: string | null, lossReason?: string | null,
+  status: number, value: number, notes?: string | null, priority?: DealCard['priority'], dueDate?: string | null, expiration_date?: string | null, lossReason?: string | null,
   customData?: Record<string, unknown>, custom_data?: Record<string, unknown>, created_at: string,
   client?: { fullname: string, type: 'individual' | 'company', registration: string, birthdate?: string, gender?: string, profession?: string, street?: string, district?: string, city?: string, state?: string, zipcode?: string, extra?: Record<string, unknown>, customData?: Record<string, unknown>, custom_data?: Record<string, unknown>, phones?: Array<{ number: string }> },
   user?: { name: string, lastname?: string }, funnel?: { id: number }, stage?: { id: number, name: string, position: number },

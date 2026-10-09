@@ -82,3 +82,16 @@ The frontend maps these API values to `active`, `lost`, and `won` respectively.
   those of direct reports identified by `users.supervisor_id`.
 - The navbar counts pending activities today. The login reminder is shown once
   per login and its session cookie is reset on a new login/logout.
+
+## Production reports
+
+`GET /api/reports/production` is the administrative reporting contract. It
+requires `from=YYYY-MM-DD` and `to=YYYY-MM-DD` and accepts `user_id`,
+`product_id`, `custom_filters` (JSON array of `{ fieldId, operator, value }`)
+and `sum_fields` (comma-separated custom field IDs). Laravel must authorize
+admin/master users, scope every query to the selected `instance_id`, and return
+`{ summary, rows, status_breakdown, loss_reasons, losses_by_user,
+outcomes_by_product, custom_field_totals, meta }`. Saved filter presets are
+available through `GET/POST /api/reports/saved` and
+`DELETE /api/reports/saved/{id}`; they are stored per instance and restricted
+to admin/master users.
