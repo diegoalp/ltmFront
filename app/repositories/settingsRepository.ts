@@ -30,7 +30,7 @@ export const createSettingsRepository = () => {
     createTeam: (body: Omit<ApiTeam, 'id'>) => request('/teams', { method: 'POST', body }),
     deleteTeam: (id: number) => request(`/teams/${id}`, { method: 'DELETE' }),
 
-    listUsers: () => fetchAll<ApiAdminUser>('/users'),
+    listUsers: (funnelId?: string) => fetchAll<ApiAdminUser>(funnelId ? `/users?funnel_id=${encodeURIComponent(funnelId)}` : '/users'),
     createUser: (body: Record<string, unknown>) => request('/users', { method: 'POST', body }),
     updateUser: (id: number, body: Record<string, unknown>) => request(`/users/${id}`, { method: 'PATCH', body }),
     deleteUser: (id: number) => request(`/users/${id}`, { method: 'DELETE' })

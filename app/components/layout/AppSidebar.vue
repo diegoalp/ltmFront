@@ -63,16 +63,16 @@ const menuItems = computed<MenuItem[]>(() => {
     to: '/',
     isActive: route.path === '/'
   },
-  // { label: 'Atividades', icon: 'calendar_month', to: '/atividades', isActive: route.path === '/atividades' },
-  // ...((['master', 'admin']).includes(user.value?.role.toLowerCase() || '')
-  //   ? [{ label: 'Relatórios', icon: 'assessment', to: '/relatorios', isActive: route.path.startsWith('/relatorios') }]
-  //   : []),
-  // {
-  //   label: 'Pipeline',
-  //   icon: 'view_kanban',
-  //   to: '/pipeline',
-  //   isActive: route.path === '/pipeline'
-  // }
+  { label: 'Atividades', icon: 'calendar_month', to: '/atividades', isActive: route.path === '/atividades' },
+  ...((['master', 'admin']).includes(user.value?.role.toLowerCase() || '')
+    ? [{ label: 'Relatórios', icon: 'assessment', to: '/relatorios', isActive: route.path.startsWith('/relatorios') }]
+    : []),
+  {
+    label: 'Pipeline',
+    icon: 'view_kanban',
+    to: '/pipeline',
+    isActive: route.path === '/pipeline'
+  }
 ]
 
   if (user.value?.role.toLowerCase() === 'master') {

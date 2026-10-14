@@ -22,6 +22,7 @@ export const useInstanceContext = () => {
   const creating = useState('instance-creating', () => false)
   const selecting = useState('instance-selecting', () => false)
   const deleting = useState('instance-deleting', () => false)
+  const settingPrincipal = useState<string | number | null>('instance-setting-principal', () => null)
   const error = useState('instances-error', () => '')
   const loaded = useState('instances-loaded', () => false)
   const canSelectInstance = computed(() => user.value?.role.toLowerCase() === 'master')
@@ -32,7 +33,7 @@ export const useInstanceContext = () => {
     try {
       const rows = extractInstances(await request<InstancesResponse>('/instances'))
       if (!rows) throw new Error('A API retornou uma lista de instâncias inválida.')
-      instances.value = rows.filter(item => item?.id != null).map(item => ({ id: item.id, name: item.name || `Instância ${item.id}`, expirationDate: item.expiration_date, isExpired: item.is_expired }))
+      instances.value = rows.filter(item => item?.id != null).map(item => ({ id: item.id, name: item.name || `Instância ${item.id}`, expirationDate: item.expiration_date, isExpired: item.is_expired, isPrincipal: item.is_principal }))
     } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Não foi possível carregar as instâncias.' }
     finally { loaded.value = true; loading.value = false }
   }
@@ -49,7 +50,7 @@ export const useInstanceContext = () => {
       const { logoFile, ...instancePayload } = payload
       const response = await request<CreateInstanceResponse>('/instances', { method: 'POST', body: { ...instancePayload, name: payload.name.trim() } })
       const instance = 'data' in response ? response.data : response
-      instances.value.push({ id: instance.id, name: instance.name || payload.name.trim(), expirationDate: instance.expiration_date, isExpired: instance.is_expired })
+      instances.value.push({ id: instance.id, name: instance.name || payload.name.trim(), expirationDate: instance.expiration_date, isExpired: instance.is_expired, isPrincipal: instance.is_principal })
       if (user.value && user.value.role !== 'master') {
         user.value.instanceId = instance.id
         user.value.role = 'admin'
@@ -81,5 +82,16 @@ export const useInstanceContext = () => {
     await request(`/instances/${id}/activate`, { method: 'PATCH', body: { expiration_date: expirationDate } })
     await loadInstances()
   }
-  return { instances, instanceId, loading, creating, selecting, deleting, error, canSelectInstance, needsInstanceSelection, loadInstances, selectInstance, createInstance, deleteInstance, activateInstance }
+  const setPrincipalInstance = async (id: number | string) => {
+    settingPrincipal.value = id; error.value = ''
+    try {
+      await request(`/instances/${id}`, { method: 'PATCH', body: { is_principal: true } })
+      await loadInstances()
+      return true
+    } catch (cause) {
+      error.value = cause instanceof Error ? cause.message : 'Não foi possível definir a instância master.'
+      return false
+    } finally { settingPrincipal.value = null }
+  }
+  return { instances, instanceId, loading, creating, selecting, deleting, settingPrincipal, error, canSelectInstance, needsInstanceSelection, loadInstances, selectInstance, createInstance, deleteInstance, activateInstance, setPrincipalInstance }
 }

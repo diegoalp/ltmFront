@@ -18,7 +18,9 @@
           <article v-for="instance in instances" :key="instance.id" class="group relative flex flex-wrap items-center gap-2 rounded-2xl border p-2 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-lg dark:hover:border-indigo-700 dark:hover:bg-indigo-950/20" :class="isSelected(instance.id) ? 'border-indigo-400 bg-indigo-50/70 ring-4 ring-indigo-500/10 dark:border-indigo-700 dark:bg-indigo-950/25' : 'border-slate-200 bg-white/50 dark:border-slate-700'">
             <button type="button" :disabled="selecting || deleting || instance.isExpired" class="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-2 text-left disabled:opacity-60" @click="selectInstance(instance.id)"><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-cyan-600 font-semibold text-white shadow-md">{{ instance.name.slice(0, 2).toUpperCase() }}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ instance.name }}</span><span class="mt-0.5 block text-xs text-slate-400">{{ instance.isExpired ? 'Expirada' : 'Acessar ambiente' }} · {{ formatExpiration(instance.expirationDate) }}</span></span><Icon name="lucide:arrow-right" class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-indigo-600" /></button>
             <span v-if="isSelected(instance.id)" class="absolute -top-2 left-4 rounded-full bg-indigo-600 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-white">Selecionada</span>
+            <span v-if="instance.isPrincipal" class="absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-950/70 dark:text-amber-300"><Icon name="lucide:crown" class="h-3 w-3" /> Master</span>
             <button v-if="isMaster" type="button" :disabled="deleting" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950/50" :aria-label="`Remover ${instance.name}`" title="Remover instância" @click="deleteTarget = instance"><Icon name="mdi:trash-can-outline" size="20" /></button>
+            <button v-if="isMaster && !instance.isPrincipal" type="button" :disabled="Boolean(settingPrincipal) || deleting" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-amber-100 hover:text-amber-600 disabled:opacity-50 dark:hover:bg-amber-950/50 dark:hover:text-amber-300" :aria-label="`Definir ${instance.name} como master`" title="Definir como master" @click="masterTarget = instance"><Icon name="lucide:crown" class="h-5 w-5" /></button>
             <form v-if="isMaster" class="flex w-full flex-wrap items-end gap-2 border-t border-slate-200 p-2 dark:border-slate-700" @submit.prevent="renew(instance.id)">
               <label class="min-w-0 flex-1 text-xs font-semibold">Nova data de expiração
                 <input v-model="renewalDates[String(instance.id)]" type="date" required :min="today" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-600 dark:bg-slate-950" />
@@ -60,6 +62,15 @@
         <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold dark:border-slate-700" @click="deleteTarget = null">Cancelar</button><button type="button" :disabled="deleting" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-500 disabled:opacity-60" @click="removeInstance">{{ deleting ? 'Removendo...' : 'Remover' }}</button></div>
       </section>
     </div>
+
+    <div v-if="masterTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm" @click.self="masterTarget = null">
+      <section class="w-full max-w-md rounded-[2rem] border border-white bg-white p-7 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950"><Icon name="lucide:crown" size="24" /></span>
+        <h2 class="mt-4 text-xl font-bold">Definir instância master?</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">A instância <strong>{{ masterTarget.name }}</strong> será definida como a instância master da conta.</p>
+        <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold dark:border-slate-700" @click="masterTarget = null">Cancelar</button><button type="button" :disabled="Boolean(settingPrincipal)" class="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-400 disabled:opacity-60" @click="makeMaster">{{ settingPrincipal ? 'Atualizando...' : 'Definir como master' }}</button></div>
+      </section>
+    </div>
   </main>
 </template>
 
@@ -73,7 +84,7 @@ useHead({ title: 'Instâncias · SMov CRM' })
 const { logout, user } = useAuth()
 const isMaster = computed(() => user.value?.role === 'master')
 const { mode, toggleTheme } = useTheme()
-const { instances, instanceId, loading, creating, selecting, deleting, error, loadInstances, selectInstance, createInstance, deleteInstance, activateInstance } = useInstanceContext()
+const { instances, instanceId, loading, creating, selecting, deleting, settingPrincipal, error, loadInstances, selectInstance, createInstance, deleteInstance, activateInstance, setPrincipalInstance } = useInstanceContext()
 const showForm = ref(user.value?.role !== 'master')
 const today = new Date().toLocaleDateString('en-CA')
 const expirationDate = ref('')
@@ -88,6 +99,7 @@ const renew = async (id: string | number) => {
   finally { renewing.value = null }
 }
 const deleteTarget = ref<InstanceItem | null>(null)
+const masterTarget = ref<InstanceItem | null>(null)
 const logoError = ref('')
 const logoPreview = ref<string | null>(null)
 const form = reactive({ name: '', logoFile: null as File | null, primaryColor: '#625751', secondaryColor: '#0f766e', accentColor: '#f59e0b', primaryTextColor: '#ffffff' })
@@ -99,6 +111,7 @@ const removePendingLogo = () => { if (logoPreview.value) URL.revokeObjectURL(log
 const handleLogo = (event: Event) => { const input = event.target as HTMLInputElement; const file = input.files?.[0]; logoError.value = ''; if (!file) return; if (!file.type.startsWith('image/')) logoError.value = 'Envie um arquivo de imagem.'; else if (file.size > 1024 * 1024) logoError.value = 'A imagem deve ter no máximo 1 MB.'; else { removePendingLogo(); form.logoFile = file; logoPreview.value = URL.createObjectURL(file) } input.value = '' }
 const submit = async () => { if (!form.name.trim() || logoError.value) return; await createInstance({ ...form, name: form.name.trim(), ...(isMaster.value ? { expiration_date: expirationDate.value } : {}) }) }
 const removeInstance = async () => { if (!deleteTarget.value) return; if (await deleteInstance(deleteTarget.value.id)) deleteTarget.value = null }
+const makeMaster = async () => { if (!masterTarget.value) return; if (await setPrincipalInstance(masterTarget.value.id)) masterTarget.value = null }
 onMounted(loadInstances)
 onBeforeUnmount(removePendingLogo)
 </script>

@@ -34,18 +34,18 @@ const mapProduct = (item: ApiProduct): CRMProduct => ({
   funnelIds: (item.funnels || []).map(funnel => String(funnel.id)), fields: mapFields(item.fields as LegacyProductField[])
 })
 
-export const useProducts = () => {
+export const useProducts = (options: { autoLoad?: boolean } = {}) => {
   const { request, fetchAll } = useApi()
   const products = useState<CRMProduct[]>('crm-products', () => [])
   const productsLoading = useState('crm-products-loading', () => false)
   const productsError = useState<string | null>('crm-products-error', () => null)
   const loaded = useState('crm-products-loaded', () => false)
 
-  const refreshProducts = async () => {
+  const refreshProducts = async (funnelId?: string) => {
     productsLoading.value = true
     productsError.value = null
     try {
-      products.value = (await fetchAll<ApiProduct>('/products')).map(mapProduct)
+      products.value = (await fetchAll<ApiProduct>(funnelId ? `/products?funnel_id=${encodeURIComponent(funnelId)}` : '/products')).map(mapProduct)
       loaded.value = true
     } catch (cause) {
       productsError.value = cause instanceof Error ? cause.message : 'Erro ao carregar produtos.'
@@ -69,6 +69,6 @@ export const useProducts = () => {
   }
 
   // `loaded` prevents cards and pages from requesting the same list concurrently.
-  if (import.meta.client && !loaded.value && !productsLoading.value) void refreshProducts()
+  if (options.autoLoad !== false && import.meta.client && !loaded.value && !productsLoading.value) void refreshProducts()
   return { products, productById, productsForCategory, productsForFunnel, addProduct, removeProduct, refreshProducts, productsLoading, productsError }
 }

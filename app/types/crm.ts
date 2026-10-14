@@ -43,7 +43,7 @@ export interface CRMUser {
   funnelId?: number | string | null
 }
 
-export interface CRMInstance { id: number | string, name: string, expirationDate?: string | null, isExpired?: boolean }
+export interface CRMInstance { id: number | string, name: string, expirationDate?: string | null, isExpired?: boolean, isPrincipal?: boolean }
 
 export interface DealTimelineItem {
   id: number

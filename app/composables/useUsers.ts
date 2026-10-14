@@ -11,12 +11,12 @@ export interface UserView {
 }
 
 /** State and actions for administrative users. */
-export const useUsers = () => {
+export const useUsers = (options: { autoLoad?: boolean } = {}) => {
   const repository = createSettingsRepository()
   const users = useState<UserView[]>('admin-users', () => [])
 
-  const loadUsers = async () => {
-    const items = await repository.listUsers()
+  const loadUsers = async (funnelId?: string) => {
+    const items = await repository.listUsers(funnelId)
     users.value = items.map(item => ({
       id: item.id,
       name: [item.name, item.lastname].filter(Boolean).join(' '),

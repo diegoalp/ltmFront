@@ -8,7 +8,7 @@ const mapCategory = (item: ApiCategory): CRMCategory => ({
   funnelIds: (item.funnels || item.funnel_ids || []).map(funnel => String(typeof funnel === 'object' ? funnel.id : funnel))
 })
 
-export const useCategories = () => {
+export const useCategories = (options: { autoLoad?: boolean } = {}) => {
   const { request, fetchAll, instanceId } = useApi()
   const { funnels } = useFunnels()
   const categories = useState<CRMCategory[]>('crm-categories', () => [])
@@ -17,12 +17,12 @@ export const useCategories = () => {
   // Because useState is shared, this flag prevents duplicate component requests.
   const loaded = useState('crm-categories-loaded', () => false)
 
-  const refreshCategories = async () => {
+  const refreshCategories = async (funnelId?: string) => {
     if (categoriesLoading.value) return
     categoriesLoading.value = true
     categoriesError.value = null
     try {
-      categories.value = (await fetchAll<ApiCategory>('/categories')).map(mapCategory)
+      categories.value = (await fetchAll<ApiCategory>(funnelId ? `/categories?funnel_id=${encodeURIComponent(funnelId)}` : '/categories')).map(mapCategory)
     } catch (cause) {
       categoriesError.value = cause instanceof Error ? cause.message : 'Erro ao carregar categorias.'
     } finally {
@@ -64,6 +64,6 @@ export const useCategories = () => {
   }
 
   // Auto-loading runs only in the browser to avoid duplicate SSR/client requests.
-  if (import.meta.client && !loaded.value && !categoriesLoading.value) void refreshCategories()
+  if (options.autoLoad !== false && import.meta.client && !categoriesLoading.value) void refreshCategories()
   return { categories, activeCategories, categoryById, addCategory, updateCategory, removeCategory, refreshCategories, categoriesLoading, categoriesError }
 }
