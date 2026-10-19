@@ -83,7 +83,7 @@
                   <div class="mt-1 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
                   <div class="summary-field">
                     <span class="summary-field__label">{{ deal.clientType === 'company' ? 'CNPJ' : 'CPF' }}</span>
-                    <button type="button" class="summary-field__value copy-value" title="Copiar documento" @click="copyValue(deal.clientType === 'company' ? 'CNPJ' : 'CPF', deal.document)">{{ deal.document || '—' }}</button>
+                    <button type="button" class="summary-field__value copy-value" title="Copiar documento" @click="copyValue(deal.clientType === 'company' ? 'CNPJ' : 'CPF', formattedDocument)">{{ formattedDocument || '—' }}</button>
                   </div>
                   <div class="summary-field">
                     <span class="summary-field__label">Categoria</span>
@@ -95,7 +95,7 @@
                   </div>
                   <div class="summary-field">
                     <span class="summary-field__label">Telefone</span>
-                    <button type="button" class="summary-field__value copy-value" title="Copiar telefone" @click="copyValue('Telefone', deal.phone)">{{ deal.phone || '—' }}</button>
+                    <button type="button" class="summary-field__value copy-value" title="Copiar telefone" @click="copyValue('Telefone', formattedPhone)">{{ formattedPhone || '—' }}</button>
                   </div>
                   <div class="summary-field">
                     <span class="summary-field__label">Responsável</span>
@@ -171,8 +171,8 @@
                     <div class="space-y-4">
                       <div v-if="hasClientValue(deal.document) || hasClientValue(deal.profession)" class="grid grid-cols-1 gap-4">
                         <div v-if="hasClientValue(deal.document)" class="field-pair">
-                          <span class="field-name">CPF</span>
-                          <button type="button" class="copy-value field-value" title="Copiar CPF" @click="copyClientValue('CPF', deal.document)">{{ deal.document }}</button>
+                          <span class="field-name">{{ deal.clientType === 'company' ? 'CNPJ' : 'CPF' }}</span>
+                          <button type="button" class="copy-value field-value" :title="`Copiar ${deal.clientType === 'company' ? 'CNPJ' : 'CPF'}`" @click="copyClientValue(deal.clientType === 'company' ? 'CNPJ' : 'CPF', formattedDocument)">{{ formattedDocument }}</button>
                         </div>
                         <div v-if="hasClientValue(deal.profession)" class="field-pair">
                           <span class="field-name">Profissão</span>
@@ -260,7 +260,7 @@
                           <span class="field-name">Telefone</span>
                           <div class="flex min-w-0 items-center gap-2">
                           <span :class="phone.isValidated ? 'bg-emerald-500' : 'bg-amber-500'" class="h-2 w-2 rounded-full inline-block"></span>
-                            <button type="button" class="copy-value field-value truncate text-slate-700 dark:text-slate-300" title="Copiar telefone" @click="copyValue('Telefone', phone.number)">{{ phone.number }}</button>
+                            <button type="button" class="copy-value field-value truncate text-slate-700 dark:text-slate-300" title="Copiar telefone" @click="copyValue('Telefone', formattedPhone)">{{ formattedPhone }}</button>
                           </div>
                         </div>
                         
@@ -522,6 +522,7 @@ import { BUSINESS_STATUS } from '~/types/api'
 import type { CRMActivity, CRMCustomField, DealStage } from '~/types/crm'
 import { formatCurrency, formatDate } from '~/utils/formatters'
 import { hasCustomFieldValue, formatCustomFieldValue } from '~/utils/customFieldDisplay'
+import { maskDocument, maskPhone } from '~/utils/masks'
 
 const { isDealDisabled } = useBusinessExpiration()
 const route = useRoute()
@@ -560,6 +561,8 @@ const category = computed(() => deal.value ? categoryById(deal.value.categoryId)
 const product = computed(() => deal.value ? productById(deal.value.productId) : undefined)
 const categoryName = computed(() => category.value?.name ?? 'Sem categoria')
 const productName = computed(() => product.value?.name ?? 'Sem produto')
+const formattedDocument = computed(() => deal.value ? maskDocument(deal.value.document, deal.value.clientType) : '')
+const formattedPhone = computed(() => deal.value ? maskPhone(deal.value.phone) : '')
 const productStyle = computed(() => ({
   backgroundColor: product.value?.color ?? '#E2E8F0',
   color: product.value?.color ? productTextColor(product.value.color) : '#334155'
