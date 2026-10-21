@@ -159,7 +159,7 @@ const newBusinessOpen = ref(false)
 type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
 
 const isAdmin = computed(() => user.value?.role === 'admin')
-const isMaster = computed(() => user.value?.role === 'master')
+const isMaster = computed(() => String(user.value?.role || '').toLowerCase() === 'master')
 const showExpiredBusinesses = ref(false)
 const canFilterByOwner = computed(() => ['admin', 'master'].includes(user.value?.role || ''))
 const assignedFunnelId = computed(() => user.value?.funnelId == null ? '' : String(user.value.funnelId))
