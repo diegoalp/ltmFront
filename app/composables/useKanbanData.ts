@@ -39,10 +39,11 @@ const mapBusiness = (item: ApiBusiness): DealCard => ({
 })
 
 export const useKanbanData = () => {
-  const { request, instanceId } = useApi()
+  const { request, fetchAll, instanceId } = useApi()
   const { funnels } = useFunnels()
   const { isDealDisabled } = useBusinessExpiration()
   const deals = useState<DealCard[]>('kanban-deals', () => [])
+  const expiredDeals = useState<DealCard[]>('kanban-expired-deals', () => [])
   const dealsLoading = useState('kanban-deals-loading', () => false)
   const dealsError = useState<string | null>('kanban-deals-error', () => null)
   const loaded = useState('kanban-deals-loaded', () => false)
@@ -243,6 +244,12 @@ export const useKanbanData = () => {
     } finally { dealsLoading.value = false }
   }
 
+  const loadExpiredDeals = async (search?: string | null) => {
+    const items = await fetchAll<ApiBusiness>(buildBusinessesPath({ expired: 1, search }))
+    expiredDeals.value = items.map(mapBusiness)
+    return expiredDeals.value
+  }
+
   // The home uses the first funnel; the pipeline page uses the parameterized helpers below.
   const firstFunnel = computed(() => funnels.value[0])
   const columns = computed<KanbanColumn[]>(() => (firstFunnel.value?.stages || []).map(stage => ({
@@ -343,12 +350,13 @@ export const useKanbanData = () => {
 
   watch(instanceId, () => {
     deals.value = []
+    expiredDeals.value = []
     stagePagination.value = {}
     loaded.value = false
   })
   return {
     columns, deals, totalPipeline, cardsByColumn, funnelColumns, dealsByFunnel, totalByFunnel,
     cardsByFunnelColumn, moveDeal, moveDealInFunnel, assignDealOwner, loadDealById, removeDeal, findDealById, refreshDeals,
-    loadNextStagePage, stagePageState, stageHasMore, dealsLoading, dealsError
+    loadNextStagePage, stagePageState, stageHasMore, dealsLoading, dealsError, expiredDeals, loadExpiredDeals
   }
 }

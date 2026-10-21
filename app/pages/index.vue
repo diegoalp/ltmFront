@@ -44,6 +44,9 @@
         </button>
       </div>
       <button type="button" :disabled="!availableFunnels.length || hasExpiredDeals" class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50" @click="newBusinessOpen = true"><Icon name="mdi:plus" size="18" />Novo negócio</button>
+      <button v-if="isMaster" type="button" class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-800 shadow-sm transition hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200" @click="toggleExpiredBusinesses">
+        <Icon name="mdi:alert-circle-outline" size="18" />{{ showExpiredBusinesses ? 'Ocultar expirados' : 'Ver expirados' }}
+      </button>
       <label v-if="canChooseFunnel" class="sr-only" for="funnel-selector">Selecionar funil</label>
       <select
         v-if="canChooseFunnel"
@@ -85,6 +88,23 @@
       </div>
     </div>
   </header>
+
+  <section v-if="isMaster && showExpiredBusinesses" class="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="font-semibold text-amber-950 dark:text-amber-100">Negócios expirados da instância</h2>
+        <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">Consulta todos os responsáveis para identificar a origem do bloqueio.</p>
+      </div>
+      <span class="rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900 dark:text-amber-100">{{ expiredDeals.length }}</span>
+    </div>
+    <div v-if="expiredDeals.length" class="mt-3 grid gap-2 md:grid-cols-2">
+      <NuxtLink v-for="deal in expiredDeals" :key="deal.id" :to="`/negocio/${deal.id}`" class="rounded-lg border border-amber-200 bg-white p-3 text-sm dark:border-amber-900 dark:bg-slate-900">
+        <span class="font-semibold text-slate-900 dark:text-slate-100">{{ deal.title }}</span>
+        <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">Responsável: {{ deal.ownerName }} · Expirado em {{ deal.expirationDate ? new Date(deal.expirationDate).toLocaleString('pt-BR') : '—' }}</span>
+      </NuxtLink>
+    </div>
+    <p v-else class="mt-3 text-sm text-amber-800 dark:text-amber-200">Nenhum negócio expirado encontrado nesta instância.</p>
+  </section>
 
   <div v-if="!settingsLoading && settingsError && availableFunnels.length === 0" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
     {{ settingsError }}
@@ -132,13 +152,15 @@ import type { DealCard, KanbanColumn } from '~/types/crm'
 const { user, isAuthenticated } = useAuth()
 const { instanceId } = useApi()
 const { funnels, funnelsLoading: settingsLoading, funnelsError: settingsError } = useFunnels()
-const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, loadNextStagePage, stagePageState, stageHasMore } = useKanbanData()
+const { funnelColumns, dealsByFunnel, moveDealInFunnel, refreshDeals, loadNextStagePage, stagePageState, stageHasMore, expiredDeals, loadExpiredDeals } = useKanbanData()
 const { users, loadUsers } = useUsers()
 const { hasExpiredDeals } = useBusinessExpiration()
 const newBusinessOpen = ref(false)
 type StatusFilter = NonNullable<Exclude<DealCard['status'], 'active'>>
 
 const isAdmin = computed(() => user.value?.role === 'admin')
+const isMaster = computed(() => user.value?.role === 'master')
+const showExpiredBusinesses = ref(false)
 const canFilterByOwner = computed(() => ['admin', 'master'].includes(user.value?.role || ''))
 const assignedFunnelId = computed(() => user.value?.funnelId == null ? '' : String(user.value.funnelId))
 const canChooseFunnel = computed(() => !assignedFunnelId.value)
@@ -240,6 +262,11 @@ watch([selectionReady, selectedFunnelId, selectedStageIds, statusFilter, selecte
 
 const applySearch = () => {
   appliedSearchQuery.value = searchQuery.value.trim()
+}
+
+const toggleExpiredBusinesses = async () => {
+  showExpiredBusinesses.value = !showExpiredBusinesses.value
+  if (showExpiredBusinesses.value) await loadExpiredDeals(appliedSearchQuery.value)
 }
 
 const handleMoveCard = (cardId: number, stage: KanbanColumn['id']) => {
