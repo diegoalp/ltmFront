@@ -84,8 +84,10 @@ export const useApi = () => {
       const fieldMessage = Object.keys(fields).length
         ? Object.values(fields).flat()[0]
         : undefined
-      const message = fieldMessage || body?.error?.message || body?.message || 'Não foi possível comunicar com a API.'
       const code = body?.error?.code || body?.code
+      const message = code === 'EXPIRED_BUSINESSES_PENDING'
+        ? 'Não é possível criar novos negócios porque existem negócios expirados. Resolva-os antes de continuar.'
+        : fieldMessage || body?.error?.message || body?.message || 'Não foi possível comunicar com a API.'
       if (import.meta.client && code === 'INSTANCE_EXPIRED') void navigateTo('/instancia-expirada')
       // Expected conflicts are handled by the calling screen before any action is taken.
       if (import.meta.client && code !== 'USER_RESTORE_REQUIRED') toast.error(message)
