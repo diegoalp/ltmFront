@@ -36,17 +36,14 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[760px] text-left text-sm">
-            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+          <table class="w-full min-w-[640px] text-left text-sm">
+            <thead class="bg-slate-50/80 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:bg-slate-950/50 dark:text-slate-400">
               <tr>
-                <th class="w-10 px-5 py-3"></th>
-                <th class="px-5 py-3">Campo</th>
-                <th class="px-5 py-3">Cadastro</th>
-                <th class="px-5 py-3">Seção da ficha</th>
-                <th class="px-5 py-3">Tipo</th>
-                <th class="px-5 py-3">Regra de exibição</th>
-                <th class="px-5 py-3">Obrigatório</th>
-                <th class="px-5 py-3 text-right">Ações</th>
+                <th scope="col" class="px-4 py-3">Campo</th>
+                <th scope="col" class="px-4 py-3">Cadastro e seção</th>
+                <th scope="col" class="px-4 py-3">Tipo</th>
+                <th scope="col" class="px-4 py-3">Exibição</th>
+                <th scope="col" class="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <Draggable
@@ -62,24 +59,34 @@
               @end="persistFieldOrder"
             >
               <template #item="{ element: field }">
-              <tr>
-                <td class="px-5 py-4">
-                  <button type="button" class="field-drag-handle inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800" :disabled="activeFieldSectionKey === 'all' || reorderingFields" title="Arrastar para reordenar">
-                    <Icon name="mdi:drag" size="18" />
+              <tr class="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <button v-if="activeFieldSectionKey !== 'all'" type="button" class="field-drag-handle inline-flex h-8 w-6 shrink-0 cursor-grab items-center justify-center rounded-md text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 dark:text-slate-600 dark:hover:bg-slate-800" :disabled="reorderingFields" :aria-label="`Reordenar ${field.label}`" title="Arrastar para reordenar">
+                      <Icon name="mdi:drag" size="16" />
+                    </button>
+                    <div class="min-w-0">
+                      <p class="font-semibold text-slate-900 dark:text-slate-100">{{ field.label }}</p>
+                      <p v-if="field.isBusinessValue" class="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400">* Valor padrão do negócio</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <p class="text-slate-700 dark:text-slate-300">{{ sectionLabels[field.section] }}</p>
+                  <p class="mt-1 max-w-[180px] truncate text-xs text-slate-500 dark:text-slate-400" :title="fieldSectionName(field)">{{ field.customFieldSectionId || field.formSection ? fieldSectionName(field) : 'Sem seção' }}</p>
+                </td>
+                <td class="px-4 py-3">
+                  <p class="text-slate-700 dark:text-slate-300">{{ fieldTypeLabels[field.type] || field.type }}</p>
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ field.required ? 'Obrigatório' : 'Opcional' }}</p>
+                </td>
+                <td class="px-4 py-3">
+                  <button v-if="field.conditions.length" type="button" class="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300" :aria-label="`Ver condições de exibição de ${field.label}`" aria-haspopup="dialog" @click="conditionFieldId = field.id">
+                    <Icon name="mdi:filter-variant" size="15" />
+                    Ver condições
                   </button>
+                  <span v-else class="px-2 text-xs text-slate-500 dark:text-slate-400">Sempre</span>
                 </td>
-                <td class="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
-                  {{ field.label }}
-                  <span v-if="field.isBusinessValue" class="ml-1 inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">Valor do negócio</span>
-                </td>
-                <td class="px-5 py-4 text-slate-600 dark:text-slate-300">{{ sectionLabels[field.section] }}</td>
-                <td class="px-5 py-4 text-slate-600 dark:text-slate-300">{{ fieldSectionName(field) }}</td>
-                <td class="px-5 py-4"><span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ field.type }}</span></td>
-                <td class="px-5 py-4 text-slate-500 dark:text-slate-400">{{ conditionSummary(field) }}</td>
-                <td class="px-5 py-4">
-                  <Icon :name="field.required ? 'mdi:check-circle' : 'mdi:minus-circle-outline'" :class="field.required ? 'text-emerald-500' : 'text-slate-300'" size="20" />
-                </td>
-                <td class="px-5 py-4">
+                <td class="px-4 py-3">
                   <div class="flex justify-end gap-1">
                     <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950" :aria-label="`Editar ${field.label}`" title="Editar campo" @click="editField(field)"><Icon name="mdi:pencil-outline" size="18" /></button>
                     <button type="button" :disabled="removingId === field.id" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-rose-950" :aria-label="`Remover ${field.label}`" title="Remover campo" @click="deleteField(field)"><Icon :name="removingId === field.id ? 'mdi:loading' : 'mdi:trash-can-outline'" :class="{ 'animate-spin': removingId === field.id }" size="18" /></button>
@@ -89,12 +96,12 @@
               </template>
               <template #footer>
               <tr v-if="!localVisibleCustomFields.length">
-                <td colspan="8" class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                   Nenhum campo nesta seção.
                 </td>
               </tr>
               <tr v-else-if="activeFieldSectionKey === 'all'">
-                <td colspan="8" class="bg-slate-50 px-5 py-3 text-xs font-semibold text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                <td colspan="5" class="bg-slate-50/80 px-4 py-3 text-xs text-slate-500 dark:bg-slate-950/50 dark:text-slate-400">
                   Selecione uma seção específica para arrastar e soltar os campos.
                 </td>
               </tr>
@@ -250,6 +257,7 @@
         </section>
       </aside>
     </div>
+    <SettingsFieldConditionsDialog :field="conditionField" :conditions="conditionDetails" @close="conditionFieldId = null" />
   </div>
 </template>
 
@@ -273,7 +281,20 @@ const removingSectionId = ref<string | null>(null)
 const activeFieldSectionKey = ref('all')
 const localVisibleCustomFields = ref<CRMCustomField[]>([])
 const localCustomFieldSections = ref<CRMCustomFieldSectionConfig[]>([])
+const conditionFieldId = ref<string | null>(null)
+const conditionField = computed(() => customFields.value.find(field => field.id === conditionFieldId.value) || null)
 const sectionLabels: Record<CRMCustomFieldSection, string> = { business: 'Negócio', product: 'Produto', client: 'Cliente' }
+const fieldTypeLabels: Record<CRMCustomFieldType, string> = {
+  text: 'Texto',
+  textarea: 'Texto longo',
+  currency: 'Moeda',
+  number: 'Número',
+  date: 'Data',
+  select: 'Seleção',
+  file: 'Arquivo',
+  group: 'Lista repetível',
+  checkbox: 'Caixa de seleção'
+}
 
 const form = reactive({
   label: '',
@@ -349,7 +370,14 @@ const conditionLabel = (condition: CRMCustomFieldCondition) => {
   const value = condition.value.map(id => options.find(item => item.id === id)?.name || id).join(', ')
   return `${field} ${condition.operator === 'equals' ? '=' : '≠'} ${value}`
 }
-const conditionSummary = (field: CRMCustomField) => field.conditions.length ? field.conditions.map(conditionLabel).join(' e ') : 'Sempre exibido'
+const conditionDetails = computed(() => (conditionField.value?.conditions || []).map(condition => {
+  const options = conditionOptions(condition.field)
+  return {
+    label: condition.field === 'category_id' ? 'Categoria' : condition.field === 'product_id' ? 'Produto' : 'Funil',
+    operator: condition.operator === 'equals' ? 'é igual a' : 'é diferente de',
+    values: condition.value.map(id => options.find(item => item.id === id)?.name || `Opção #${id}`)
+  }
+}))
 const defaultFormSection = (section: CRMCustomFieldSection) => section === 'client' ? 'Dados complementares do cliente' : section === 'product' ? 'Dados complementares do produto' : 'Dados complementares do negócio'
 const sortedCustomFieldSections = computed(() => [...customFieldSections.value].sort((a, b) => a.section.localeCompare(b.section) || a.position - b.position || a.name.localeCompare(b.name)))
 const fieldSectionOptions = computed(() => customFieldSections.value

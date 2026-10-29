@@ -342,33 +342,10 @@
                 <BusinessDocuments :business-id="deal.id" />
               </div>
 
-              <div v-else class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
-                  <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Linha do Tempo</h2>
-                  <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ timeline.length }}</span>
-                </div>
-                <div class="max-h-[420px] overflow-y-auto p-5 custom-scrollbar">
-                  <div v-if="timeline.length" class="relative ml-2 space-y-4 border-l-2 border-slate-100 pl-4 dark:border-slate-800">
-                    <div v-for="event in timeline" :key="event.id" class="relative">
-                      <span class="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-slate-300 ring-4 ring-white dark:bg-slate-700 dark:ring-slate-900"></span>
-                      <div class="text-xs">
-                        <button type="button" class="copy-value font-semibold" title="Copiar evento" @click="copyValue('Evento', event.title)">{{ event.title }}</button>
-                        <span class="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-400">
-                          <button type="button" class="copy-value inline text-[10px] text-slate-400 dark:text-slate-400" title="Copiar data do evento" @click="copyValue('Data do evento', formatDate(event.date))">{{ formatDate(event.date) }}</button>
-                          <span>por</span>
-                          <button type="button" class="copy-value inline text-[10px] text-slate-400 dark:text-slate-400" title="Copiar usuário do evento" @click="copyValue('Usuário do evento', event.userName)">{{ event.userName }}</button>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <p v-else class="py-8 text-center text-sm text-slate-500">Nenhum evento registrado.</p>
-                </div>
-              </div>
-
             </div>
             
           </div>
-          <aside class="space-y-4 xl:sticky xl:top-6">
+          <aside class="min-w-0 space-y-4 xl:sticky xl:top-6">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold" :class="statusBadgeClass">
                 <span class="h-2.5 w-2.5 rounded-full" :class="isDealWon ? 'bg-emerald-500' : isDealLost ? 'bg-rose-500' : 'bg-blue-500'" />
@@ -413,6 +390,31 @@
             <div v-else-if="!businessChecklistsLoading" class="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-400 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
               Nenhuma checklist aplicável
             </div>
+            <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-labelledby="business-history-title">
+              <header class="flex items-center justify-between gap-3 border-b border-slate-100 p-4 dark:border-slate-800">
+                <h2 id="business-history-title" class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <Icon name="mdi:history" size="18" class="shrink-0 text-slate-400" />
+                  Histórico do negócio
+                </h2>
+                <span class="text-xs text-slate-500 dark:text-slate-400">{{ timeline.length }}</span>
+              </header>
+              <div class="custom-scrollbar max-h-[420px] overflow-y-auto p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500" tabindex="0" role="region" aria-label="Eventos do histórico do negócio">
+                <div v-if="timeline.length" class="relative ml-2 space-y-4 border-l-2 border-slate-100 pl-4 dark:border-slate-800">
+                  <div v-for="event in timeline" :key="event.id" class="relative">
+                    <span class="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-slate-300 ring-4 ring-white dark:bg-slate-700 dark:ring-slate-900" aria-hidden="true"></span>
+                    <div class="text-xs">
+                      <button type="button" class="copy-value break-words font-semibold" title="Copiar evento" @click="copyValue('Evento', event.title)">{{ event.title }}</button>
+                      <span class="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-400">
+                        <button type="button" class="copy-value inline text-[10px] text-slate-400 dark:text-slate-400" title="Copiar data do evento" @click="copyValue('Data do evento', formatDate(event.date))">{{ formatDate(event.date) }}</button>
+                        <span>por</span>
+                        <button type="button" class="copy-value inline break-words text-[10px] text-slate-400 dark:text-slate-400" title="Copiar usuário do evento" @click="copyValue('Usuário do evento', event.userName)">{{ event.userName }}</button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="py-4 text-center text-xs text-slate-500 dark:text-slate-400">Nenhum evento registrado.</p>
+              </div>
+            </section>
           </aside>
         </div>
       </section>
@@ -537,7 +539,7 @@ const { customFields } = useCustomFields()
 const { customFieldSections } = useCrmSettings()
 const { users, loadUsers } = useUsers()
 
-type BusinessTab = 'registration' | 'business' | `repeatable:${string}` | 'notes' | 'activities' | 'documents' | 'history'
+type BusinessTab = 'registration' | 'business' | `repeatable:${string}` | 'notes' | 'activities' | 'documents'
 const activeTab = ref<BusinessTab>('registration')
 const accentTextColor = computed(() => {
   const hex = settings.value.accentColor.replace('#', '')
@@ -667,8 +669,7 @@ const businessTabs = computed<Array<{ id: BusinessTab, label: string, icon: stri
   ...repeatableBusinessFields.value.map(field => ({ id: `repeatable:${field.id}` as const, label: field.label, icon: 'mdi:format-list-group' })),
   { id: 'notes', label: 'Notas', icon: 'mdi:note-text-outline' },
   { id: 'activities', label: 'Atividades', icon: 'mdi:calendar-clock-outline' },
-  { id: 'documents', label: 'Documentos', icon: 'mdi:file-document-outline' },
-  { id: 'history', label: 'Histórico', icon: 'mdi:history' }
+  { id: 'documents', label: 'Documentos', icon: 'mdi:file-document-outline' }
 ])
 const businessDisplaySections = computed(() => {
   const sections = new Map<string, { title: string, order: number, fields: DetailField[], repeatableFields: CRMCustomField[] }>()

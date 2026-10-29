@@ -12,7 +12,7 @@
             <select v-if="subField.type === 'select'" v-model="row[subField.key]" :required="subField.required" class="field-input"><option value="" disabled>Selecione</option><option v-for="option in subField.options" :key="option" :value="option">{{ option }}</option></select>
             <input v-else-if="subField.type === 'checkbox'" v-model="row[subField.key]" type="checkbox" class="rounded border-slate-300">
             <textarea v-else-if="subField.type === 'textarea'" v-model="row[subField.key]" :required="subField.required" rows="2" class="field-input" />
-            <input v-else-if="subField.type === 'currency'" :value="row[subField.key]" :required="subField.required" inputmode="numeric" class="field-input" @input="row[subField.key] = currencyMask(inputValue($event))">
+            <input v-else-if="subField.type === 'currency'" :value="formatCustomFieldValue('currency', row[subField.key])" :required="subField.required" inputmode="numeric" class="field-input" @input="row[subField.key] = currencyMask(inputValue($event))">
             <input v-else v-model="row[subField.key]" :required="subField.required" :type="inputType(subField.type)" class="field-input">
           </label>
         </div>
@@ -20,13 +20,14 @@
       <button type="button" class="text-xs font-bold text-indigo-600" @click="addRow">+ Adicionar item</button>
     </div>
     <input v-else-if="field.type === 'file'" type="file" :required="field.required" class="field-input" @change="setFileName">
-    <input v-else-if="field.type === 'currency'" :value="model" :required="field.required" inputmode="numeric" class="field-input" @input="model = currencyMask(inputValue($event))">
+    <input v-else-if="field.type === 'currency'" :value="formatCustomFieldValue('currency', model)" :required="field.required" inputmode="numeric" class="field-input" @input="model = currencyMask(inputValue($event))">
     <input v-else v-model="model" :required="field.required" :type="inputType(field.type)" class="field-input">
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CRMCustomField, CRMCustomFieldType } from '~/types/crm'
+import { formatCustomFieldValue } from '~/utils/customFieldDisplay'
 
 const props = defineProps<{ field: CRMCustomField }>()
 const model = defineModel<unknown>()

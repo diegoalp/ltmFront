@@ -41,7 +41,7 @@
               <select v-if="subField.type === 'select'" v-model="groupRow[subField.key]" :required="subField.required" class="field-input"><option value="" disabled>Selecione</option><option v-for="option in subField.options" :key="option" :value="option">{{ option }}</option></select>
               <input v-else-if="subField.type === 'checkbox'" v-model="groupRow[subField.key]" type="checkbox" class="rounded border-slate-300">
               <textarea v-else-if="subField.type === 'textarea'" v-model="groupRow[subField.key]" :required="subField.required" rows="2" class="field-input" />
-              <input v-else-if="subField.type === 'currency'" :value="groupRow[subField.key]" :required="subField.required" inputmode="numeric" class="field-input" @input="groupRow[subField.key] = currencyMask(inputValue($event))">
+              <input v-else-if="subField.type === 'currency'" :value="formatCustomFieldValue('currency', groupRow[subField.key])" :required="subField.required" inputmode="numeric" class="field-input" @input="groupRow[subField.key] = currencyMask(inputValue($event))">
               <input v-else v-model="groupRow[subField.key]" :required="subField.required" :type="inputType(subField.type)" class="field-input">
             </label>
           </div>
@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import type { DealCard, CRMCustomField, CRMCustomFieldType, CRMCustomSubFieldType } from '~/types/crm'
+import { formatCustomFieldValue } from '~/utils/customFieldDisplay'
 
 export type BusinessEditTarget = {
   type: 'client-core' | 'deal-core' | 'client-custom-section' | 'business-custom-section' | 'group-row' | 'group-new'
@@ -102,7 +103,13 @@ const maskPhone = (value: string) => {
   return digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3')
 }
 const currencyMask = (value: string) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(onlyDigits(value)) / 100)
-const parseCurrency = (value: unknown) => Number(String(value || '').replace(/[^\d,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0
+const parseCurrency = (value: unknown) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const raw = String(value ?? '').trim()
+  if (!raw) return 0
+  if (raw.includes(',')) return Number(raw.replace(/[^\d,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0
+  return Number(raw.replace(/[^\d.-]/g, '')) || 0
+}
 const inputValue = (event: Event) => (event.target as HTMLInputElement).value
 const inputType = (type: CRMCustomSubFieldType) => type === 'number' ? 'number' : type === 'date' ? 'date' : type === 'phone' ? 'tel' : 'text'
 const updateRegistration = (event: Event) => { form.registration = form.clientType === 'company' ? maskCnpj((event.target as HTMLInputElement).value) : maskCpf((event.target as HTMLInputElement).value) }
@@ -118,8 +125,9 @@ const targetFields = computed(() => {
     .sort((a, b) => a.position - b.position || a.label.localeCompare(b.label))
 })
 const groupField = computed(() => customFields.value.find(field => field.id === editTarget.value?.groupFieldId && field.type === 'group'))
+const configuredBusinessValueField = computed(() => customFields.value.find(item => item.type === 'currency' && item.isBusinessValue))
 const configuredBusinessValue = computed(() => {
-  const field = customFields.value.find(item => item.type === 'currency' && item.isBusinessValue)
+  const field = configuredBusinessValueField.value
   return field ? parseCurrency(customValues[field.id]) : null
 })
 const businessValueDisplay = computed(() => configuredBusinessValue.value === null ? form.value : currencyMask(String(Math.round(configuredBusinessValue.value * 100))))
@@ -230,7 +238,10 @@ const submit = async () => {
     } else if (['group-row', 'group-new'].includes(editTarget.value.type) && groupField.value) {
       await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: { custom_data: { custom_fields: { ...props.deal.customFields, [groupField.value.id]: buildGroupRows() } } } })
     } else {
-      await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: { custom_data: { custom_fields: buildBusinessCustomFields() } } })
+      await request(`/businesses/${props.deal.id}`, { method: 'PATCH', body: {
+        ...(configuredBusinessValueField.value ? { value: configuredBusinessValue.value } : {}),
+        custom_data: { custom_fields: buildBusinessCustomFields() }
+      } })
     }
     await refreshDeals({ funnelId: props.deal.funnelId, stageIds: props.deal.funnelStageId ? [props.deal.funnelStageId] : [] })
     toast.success('Informações atualizadas.')

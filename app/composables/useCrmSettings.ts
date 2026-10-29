@@ -1,12 +1,8 @@
 import type {
   CRMCustomField, CRMCustomFieldSectionConfig, CRMFunnel, CRMPermissionRole, CRMPublicLeadForm, CRMTask
 } from '~/types/crm'
-import type { ApiFunnel, ApiStage } from '~/types/api'
-interface ApiCustomField {
-  id: number, label: string, section: CRMCustomField['section'], custom_field_section_id?: number | null, form_section?: string | null, form_section_order?: number | null, type: CRMCustomField['type'], required: boolean, default_value?: boolean | null, is_business_value?: boolean, visible_when: string,
-  conditions?: Array<Omit<CRMCustomField['conditions'][number], 'value'> & { value: string | string[] }>, options?: string[],
-  sub_fields?: CRMCustomField['subFields'], position?: number | null
-}
+import type { ApiCustomField, ApiFunnel, ApiResourceResponse, ApiStage } from '~/types/api'
+import { mapCustomField } from '~/utils/customFields'
 interface ApiRole { id: number, key: string, name: string, description: string, permissions: Record<string, boolean> }
 interface ApiTask { id: number, title: string, priority: CRMTask['priority'], due_at?: string, business?: { client?: { fullname?: string } }, owner?: { name?: string } }
 interface ApiPublicForm { id: number, name: string, headline: string, channel: string, funnel_id: number, fields: string[], active: boolean }
@@ -21,6 +17,7 @@ const expirationLabel = (stage: ApiStage) => stage.duration ? `${stage.duration}
  */
 export const useCrmSettings = () => {
   const { request, fetchAll } = useApi()
+  const toast = useToast()
   const funnels = useState<CRMFunnel[]>('crm-funnels', () => [])
   const customFields = useState<CRMCustomField[]>('crm-custom-fields', () => [])
   const customFieldSections = useState<CRMCustomFieldSectionConfig[]>('crm-custom-field-sections', () => [])
@@ -51,17 +48,7 @@ export const useCrmSettings = () => {
           id: stage.id, title: stage.name, expirationLabel: expirationLabel(stage), color: stage.color || item.color || null, isFinal: stage.is_final || false
         }))
       }))
-      if (fieldResult.status === 'fulfilled') customFields.value = fieldResult.value.map(item => ({
-        id: String(item.id), label: item.label, section: item.section, type: item.type,
-        customFieldSectionId: item.custom_field_section_id ? String(item.custom_field_section_id) : null,
-        formSection: item.form_section || null, formSectionOrder: item.form_section_order ?? 0,
-        required: item.required, defaultValue: item.default_value ?? null, isBusinessValue: item.is_business_value ?? false, visibleWhen: item.visible_when,
-        conditions: (item.conditions || []).map(condition => ({
-          ...condition,
-          value: Array.isArray(condition.value) ? condition.value.map(String) : [String(condition.value)]
-        })),
-        options: item.options || [], subFields: item.sub_fields || [], position: item.position ?? 0
-      }))
+      if (fieldResult.status === 'fulfilled') customFields.value = fieldResult.value.map(mapCustomField)
       if (sectionResult.status === 'fulfilled') customFieldSections.value = sectionResult.value.map(item => ({
         id: String(item.id), name: item.name, section: item.section, position: item.position ?? 0
       }))
@@ -108,13 +95,23 @@ export const useCrmSettings = () => {
       sub_fields: payload.type === 'group' ? payload.subFields : null,
       position: payload.position
   })
+  const reloadSavedCustomField = async (id: string, payload: Omit<CRMCustomField, 'id'>) => {
+    customFields.value = (await fetchAll<ApiCustomField>('/custom-fields')).map(mapCustomField)
+    const saved = customFields.value.find(field => field.id === id)
+    const expected = payload.type === 'currency' && payload.isBusinessValue
+    if (!saved || saved.isBusinessValue !== expected) {
+      const message = 'A opção de valor do negócio não foi persistida. Recarregue a página e tente salvar novamente.'
+      toast.error(message)
+      throw new Error(message)
+    }
+  }
   const addCustomField = async (payload: Omit<CRMCustomField, 'id'>) => {
-    await request('/custom-fields', { method: 'POST', body: customFieldBody(payload) })
-    await refreshSettings()
+    const created = await request<ApiResourceResponse<ApiCustomField>>('/custom-fields', { method: 'POST', body: customFieldBody(payload) })
+    await reloadSavedCustomField(String(created.data.id), payload)
   }
   const updateCustomField = async (id: string, payload: Omit<CRMCustomField, 'id'>) => {
     await request(`/custom-fields/${id}`, { method: 'PATCH', body: customFieldBody(payload) })
-    await refreshSettings()
+    await reloadSavedCustomField(id, payload)
   }
   const removeCustomField = async (id: string) => {
     await request(`/custom-fields/${id}`, { method: 'DELETE' })

@@ -1,4 +1,4 @@
-import type { DealCard } from './crm'
+import type { CRMCustomField, DealCard } from './crm'
 
 export interface ApiPaginatedResponse<T> { data: T[], current_page?: number, last_page?: number, total?: number, meta?: { last_page?: number } }
 export type ApiCollectionResponse<T> = ApiPaginatedResponse<T> | T[]
@@ -14,7 +14,24 @@ export interface ApiLeadSource { id: number, name: string, type: string, descrip
 export interface ApiDisposition extends ApiLeadSource { active: boolean }
 export interface ApiTeam { id: number, name: string, description?: string | null }
 export interface ApiAdminUser extends ApiUser { email: string, team_id?: number | null, funnel_id?: number | null, supervisor_id?: number | null }
-export interface ApiCustomField { id: number, label: string, section: string, custom_field_section_id?: number | null, form_section?: string | null, form_section_order?: number | null, type: string, required: boolean, default_value?: boolean | null, is_business_value?: boolean, visible_when: string, conditions?: Array<{ field: string, operator: string, value: string[] }>, options?: string[], sub_fields?: Array<{ key: string, label: string, type: string, required: boolean, options?: string[], position: number }>, position?: number | null }
+export interface ApiCustomField {
+  id: number
+  label: string
+  section: CRMCustomField['section']
+  custom_field_section_id?: number | null
+  form_section?: string | null
+  form_section_order?: number | null
+  type: CRMCustomField['type']
+  required: boolean
+  default_value?: boolean | null
+  is_business_value?: boolean | number | string | null
+  isBusinessValue?: boolean | number | string | null
+  visible_when: string
+  conditions?: Array<Omit<CRMCustomField['conditions'][number], 'value'> & { value: string | string[] }>
+  options?: string[]
+  sub_fields?: CRMCustomField['subFields']
+  position?: number | null
+}
 export interface ApiCustomFieldSection { id: number, name: string, section: string, position?: number | null }
 export interface ApiPermissionRole { id: number, name: string, description?: string | null, permissions: Record<string, boolean> }
 export interface ApiTask { id: number, title: string, priority: 'low' | 'medium' | 'high', due_at?: string | null, business?: { client?: { fullname?: string } }, owner?: { name?: string } }

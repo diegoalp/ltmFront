@@ -151,7 +151,13 @@ const maskPhone = (value: string) => {
   return digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3')
 }
 const currencyMask = (value: string) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(onlyDigits(value)) / 100)
-const parseCurrency = (value: unknown) => Number(String(value || '').replace(/[^\d,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0
+const parseCurrency = (value: unknown) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const raw = String(value ?? '').trim()
+  if (!raw) return 0
+  if (raw.includes(',')) return Number(raw.replace(/[^\d,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0
+  return Number(raw.replace(/[^\d.-]/g, '')) || 0
+}
 const updateRegistration = (event: Event) => { form.registration = form.clientType === 'company' ? maskCnpj((event.target as HTMLInputElement).value) : maskCpf((event.target as HTMLInputElement).value) }
 const updatePhone = (event: Event) => { form.phone = maskPhone((event.target as HTMLInputElement).value) }
 const updateValue = (event: Event) => { if (configuredBusinessValue.value === null) form.value = currencyMask((event.target as HTMLInputElement).value) }
